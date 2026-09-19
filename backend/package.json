@@ -1,0 +1,29 @@
+{
+  "name": "campuscoins-backend",
+  "version": "1.0.0",
+  "description": "Node.js & Express API Gateway for CampusCoins platform",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "echo \"No tests specified yet\" && exit 0"
+  },
+  "keywords": [
+    "campuscoins",
+    "express",
+    "nodejs",
+    "api"
+  ],
+  "author": "CampusCoins Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
