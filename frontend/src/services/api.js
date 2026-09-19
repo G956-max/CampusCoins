@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase, isSupabaseConfigured } from '../config/supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -7,19 +8,33 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
  */
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request Interceptor (attaches JWT auth tokens when connected to Supabase in Phase 2)
+// Request Interceptor: Attach Supabase JWT or Role Token
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('campuscoins_auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    // 1. Check real Supabase session if configured
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          config.headers.Authorization = `Bearer ${session.access_token}`;
+          return config;
+        }
+      } catch (err) {
+        console.warn('[API Interceptor] Supabase session retrieval notice:', err);
+      }
     }
+
+    // 2. Fallback to mock session token from localStorage
+    const savedRole = localStorage.getItem('campuscoins_mock_role') || 'student';
+    config.headers.Authorization = `Bearer mock-${savedRole}-token`;
+    config.headers['x-mock-role'] = savedRole;
+
     return config;
   },
   (error) => {
@@ -27,7 +42,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor (centralized response error handling)
+// Response Interceptor: Centralized error handling
 api.interceptors.response.use(
   (response) => {
     return response.data;
@@ -37,13 +52,15 @@ api.interceptors.response.use(
       error.response?.data?.message ||
       error.message ||
       'An unexpected network error occurred';
-    
-    // In Phase 2: Handle 401 Unauthorized token expirations
+
     if (error.response?.status === 401) {
-      console.warn('[API] Session expired or unauthorized.');
+      console.warn('[API] Session expired or unauthenticated.');
     }
 
-    return Promise.reject(new Error(message));
+    const customError = new Error(message);
+    customError.status = error.response?.status;
+    customError.errors = error.response?.data?.errors;
+    return Promise.reject(customError);
   }
 );
 

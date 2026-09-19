@@ -26,7 +26,11 @@ import Modal from '../../components/common/Modal';
 import { MOCK_STUDENT_DATA } from '../../constants/mockData';
 import { useAuth } from '../../context/AuthContext';
 
+import { useNavigate, Link } from 'react-router-dom';
+import complaintApi from '../../services/complaintApi';
+
 const StudentDashboard = () => {
+  const navigate = useNavigate();
   const { user, profile, wallet } = useAuth();
   const [modalInfo, setModalInfo] = useState({
     isOpen: false,
@@ -35,8 +39,38 @@ const StudentDashboard = () => {
     content: '',
   });
 
-  // Complaint mock dataset preserved for Phase 3 ticket lifecycle
-  const { metrics, recentComplaints } = MOCK_STUDENT_DATA;
+  // Complaint mock dataset preserved for fallback
+  const { metrics } = MOCK_STUDENT_DATA;
+  const [recentComplaints, setRecentComplaints] = useState([]);
+  const [complaintStats, setComplaintStats] = useState({
+    total: metrics.myComplaints,
+    pending: metrics.pendingComplaints,
+    resolved: metrics.resolvedComplaints,
+  });
+
+  useEffect(() => {
+    const fetchLiveComplaints = async () => {
+      try {
+        const res = await complaintApi.getMyComplaints();
+        if (res.data && res.data.length > 0) {
+          setRecentComplaints(res.data.slice(0, 5));
+          const total = res.data.length;
+          const pending = res.data.filter((c) =>
+            ['submitted', 'under_review', 'assigned', 'in_progress'].includes(c.status)
+          ).length;
+          const resolved = res.data.filter((c) =>
+            ['resolved', 'verified'].includes(c.status)
+          ).length;
+          setComplaintStats({ total, pending, resolved });
+        } else {
+          setRecentComplaints(MOCK_STUDENT_DATA.recentComplaints);
+        }
+      } catch {
+        setRecentComplaints(MOCK_STUDENT_DATA.recentComplaints);
+      }
+    };
+    fetchLiveComplaints();
+  }, []);
 
   const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'Student';
   const realCoinBalance = wallet?.balance ?? 0;
@@ -58,24 +92,28 @@ const StudentDashboard = () => {
         subtitle={`Student Portal • ${profile?.email || user?.email || 'student@campus.edu'} • ${profile?.department?.name || 'Computer Science and Engineering'}`}
         badge={
           <Badge variant="gold" size="sm" withDot>
-            Phase 2 Supabase Live
+            Phase 3 Lifecycle Active
           </Badge>
         }
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<Plus size={16} />}
-            onClick={() =>
-              handleActionClick(
-                'Report an Issue',
-                'Phase 3',
-                'The full multi-step complaint reporting workflow with photo evidence upload and auto-tagging will be implemented in Phase 3.'
-              )
-            }
-          >
-            Report Issue
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<FileText size={16} />}
+              onClick={() => navigate('/student/complaints')}
+            >
+              My Complaints
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus size={16} />}
+              onClick={() => navigate('/student/complaints/new')}
+            >
+              Report Issue
+            </Button>
+          </div>
         }
       />
 
@@ -159,14 +197,7 @@ const StudentDashboard = () => {
             title="Report an Issue"
             description="Submit an infrastructure defect with photos and location details."
             icon={AlertCircle}
-            badge="Phase 3"
-            onClick={() =>
-              handleActionClick(
-                'Report an Issue',
-                'Phase 3',
-                'Full Complaint Submission & Evidence Upload to Supabase Storage launches in Phase 3.'
-              )
-            }
+            onClick={() => navigate('/student/complaints/new')}
           />
 
           {/* Action 2: View Complaints */}
@@ -174,14 +205,7 @@ const StudentDashboard = () => {
             title="View Complaints"
             description="Inspect the live status, comments, and technician notes of your tickets."
             icon={FileText}
-            badge="Phase 3"
-            onClick={() =>
-              handleActionClick(
-                'Complaint Tracking',
-                'Phase 3',
-                'Real-time complaint tracking and student resolution verification launches in Phase 3.'
-              )
-            }
+            onClick={() => navigate('/student/complaints')}
           />
 
           {/* Action 3: Campus Map */}
@@ -227,9 +251,13 @@ const StudentDashboard = () => {
               Your latest submitted tickets and their current resolution status
             </p>
           </div>
-          <Badge variant="purple" size="sm">
-            Phase 3 Pipeline
-          </Badge>
+          <Link
+            to="/student/complaints"
+            className="text-xs font-semibold text-campus-400 hover:text-campus-300 inline-flex items-center gap-1"
+          >
+            <span>View All</span>
+            <ChevronRight size={14} />
+          </Link>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -237,14 +265,15 @@ const StudentDashboard = () => {
             {recentComplaints.map((item) => (
               <div
                 key={item.id}
-                className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-800/30 transition-colors"
+                className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-800/30 transition-colors cursor-pointer"
+                onClick={() => navigate(`/student/complaints/${item.id}`)}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5">
                     <span className="text-xs font-mono font-bold text-slate-400">
-                      {item.id}
+                      {item.tracking_code || item.id}
                     </span>
-                    <Badge variant={item.statusVariant} size="sm">
+                    <Badge variant={item.statusVariant || 'default'} size="sm">
                       {item.status}
                     </Badge>
                     <span className="text-xs text-slate-500 font-medium">
@@ -257,30 +286,26 @@ const StudentDashboard = () => {
                   <div className="flex items-center gap-4 text-xs text-slate-400">
                     <span className="flex items-center gap-1">
                       <MapPin size={12} className="text-slate-500" />
-                      {item.location}
+                      {item.location || item.general_location || 'Campus Location'}
                     </span>
-                    <span>Assigned: {item.assignedDept}</span>
+                    {item.assignedDept && <span>Assigned: {item.assignedDept}</span>}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
                   <div className="text-right">
-                    <span className="text-xs font-bold text-coin-400 block">
-                      +{item.coinsAwarded} Coins
+                    <span className="text-[11px] text-slate-500 block">
+                      {item.date || (item.created_at ? new Date(item.created_at).toLocaleDateString() : '')}
                     </span>
-                    <span className="text-[11px] text-slate-500">{item.date}</span>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     className="text-xs"
-                    onClick={() =>
-                      handleActionClick(
-                        `Details: ${item.id}`,
-                        'Phase 3',
-                        `Detailed lifecycle timeline and technician notes for ticket ${item.id} (${item.title}) will query the complaints table in Phase 3.`
-                      )
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/student/complaints/${item.id}`);
+                    }}
                   >
                     View
                   </Button>

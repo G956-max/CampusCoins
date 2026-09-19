@@ -12,8 +12,18 @@ import LandingPage from '../pages/landing/LandingPage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import StudentDashboard from '../pages/student/StudentDashboard';
+import ReportIssuePage from '../pages/student/ReportIssuePage';
+import StudentComplaintsPage from '../pages/student/StudentComplaintsPage';
+import StudentComplaintDetailPage from '../pages/student/StudentComplaintDetailPage';
+
 import StaffDashboard from '../pages/staff/StaffDashboard';
+import StaffComplaintsPage from '../pages/staff/StaffComplaintsPage';
+import StaffComplaintDetailPage from '../pages/staff/StaffComplaintDetailPage';
+
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminComplaintsPage from '../pages/admin/AdminComplaintsPage';
+import AdminComplaintDetailPage from '../pages/admin/AdminComplaintDetailPage';
+
 import ProfilePage from '../pages/profile/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -60,6 +70,9 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="complaints" element={<StudentComplaintsPage />} />
+        <Route path="complaints/new" element={<ReportIssuePage />} />
+        <Route path="complaints/:id" element={<StudentComplaintDetailPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/student/dashboard" replace />} />
       </Route>
@@ -74,6 +87,8 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<StaffDashboard />} />
+        <Route path="complaints" element={<StaffComplaintsPage />} />
+        <Route path="complaints/:id" element={<StaffComplaintDetailPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/staff/dashboard" replace />} />
       </Route>
@@ -88,6 +103,8 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="complaints" element={<AdminComplaintsPage />} />
+        <Route path="complaints/:id" element={<AdminComplaintDetailPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
       </Route>

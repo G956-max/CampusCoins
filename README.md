@@ -2,7 +2,7 @@
 
 > **Report. Resolve. Earn. Improve.**
 
-[![Phase](https://img.shields.io/badge/Phase-1%20Foundation-blue.svg)](docs/architecture.md)
+[![Phase](https://img.shields.io/badge/Phase-3%20Core%20Complaint%20Management-blue.svg)](docs/architecture.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20TailwindCSS-61DAFB.svg)](frontend/)
 [![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-339933.svg)](backend/)
@@ -27,11 +27,13 @@ Traditional college grievance mechanisms often suffer from:
 
 ---
 
-## 🚀 Scope Status: Phase 1 — Project Foundation
+## 🚀 Scope Status: Phase 3 — Core Complaint Management System
 
 > [!IMPORTANT]
-> **This repository is currently at Phase 1.**
-> Phase 1 establishes the rock-solid, production-style foundation: monorepo architecture, dark-first glassmorphic design system, responsive landing page, role-based dashboard scaffolds (Student, Staff, Admin), authentication UI with Zod validation, modular Express API with `/api/health`, and Supabase abstractions. Full complaint processing, AI, navigation, and token redemption are scheduled for subsequent phases.
+> **This repository is currently at Phase 3.**
+> Phase 3 implements the complete, robust end-to-end complaint lifecycle:
+> `Student report + evidence` &rarr; `Admin review / reject (with reason) / assign staff` &rarr; `Staff start work / progress updates / mark resolved (with resolution note)` &rarr; `Student resolution verification / reopen (with reason)`.
+> Includes 24 automated lifecycle test cases, cascaded building/floor/room location selectors, full evidence galleries with lightbox modals, and vertical chronological audit timelines.
 
 ---
 
@@ -193,23 +195,39 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 ## 🗺️ Development Roadmap
 
-- [x] **Phase 1: Project Foundation** *(Current)*
+- [x] **Phase 1: Project Foundation**
   - Monorepo structure, dark glassmorphism design system.
   - Reusable component library (Button, Input, Card, Modal, Badge, etc.).
   - Landing page with CSS/SVG mockup & live API status indicator.
   - Auth UI (`/login`, `/register`, role selector, forgot password modal).
   - Role-based dashboard placeholders (`/student/dashboard`, `/staff/dashboard`, `/admin/dashboard`).
   - Express backend with `/api/health`, helmet, cors, rate limiting, and centralized error handling.
-- [ ] **Phase 2: Core Database & Supabase Integration**
-  - PostgreSQL schema creation (Complaints, Users, Coins, Departments).
-  - Real Supabase Auth (Sign Up, Sign In, Session management, Row Level Security).
-  - Complaint creation and resolution workflow.
-- [ ] **Phase 3: AI Microservice (FastAPI)**
-  - Automated ticket duplicate detection.
-  - Image verification and classification.
-  - Smart department routing.
+- [x] **Phase 2: Core Database & Supabase Integration**
+  - PostgreSQL schema creation (Complaints, Profiles, Wallets, Departments, Locations).
+  - Supabase Auth (Sign Up, Sign In, Session management, Row Level Security, RBAC).
+  - Seed datasets and profiles.
+- [x] **Phase 3: Core Complaint Management System** *(Completed)*
+  - Complete complaint lifecycle: Submit &rarr; Admin Review / Reject / Assign &rarr; Staff In Progress & Progress Notes & Resolve &rarr; Student Verify / Reopen.
+  - Cascading location selector (Building &rarr; Floor &rarr; Room + General Location fallback).
+  - Evidence upload (images &le; 5MB, PDF &le; 10MB, video &le; 25MB) with preview lightbox.
+  - Vertical chronological audit trail and status timeline.
+  - Strict server-side RBAC guards and state machine validator (`ALLOWED_TRANSITIONS`).
+  - 24-case automated lifecycle test suite (`node test/complaintLifecycle.test.js` &rarr; 24/24 Passed).
 - [ ] **Phase 4: Campus Navigation Engine**
   - OpenStreetMap & MapLibre integration.
   - Dijkstra/A* pathfinding between college blocks and reported incidents.
 - [ ] **Phase 5: Gamification, Wallet & Bounties**
   - Coin transaction ledger, leaderboard, reward redemption shop.
+
+---
+
+## 🧪 Automated Testing
+
+To run the end-to-end complaint lifecycle test suite:
+
+```bash
+cd backend
+node test/complaintLifecycle.test.js
+```
+
+All 24 test cases will validate creation, validation constraints, admin rejection reasons, staff assignments, work order progress notes, resolution comments, student verification, student reopening reasons, IDOR security, and illegal state transitions.

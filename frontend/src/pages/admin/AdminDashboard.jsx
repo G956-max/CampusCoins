@@ -31,7 +31,10 @@ import Modal from '../../components/common/Modal';
 import { MOCK_ADMIN_DATA } from '../../constants/mockData';
 import { useAuth } from '../../context/AuthContext';
 
+import { useNavigate, Link } from 'react-router-dom';
+
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
@@ -48,18 +51,28 @@ const AdminDashboard = () => {
         subtitle={`Campus-wide incident metrics, SLA performance, and CampusCoins token distribution • ${displayName} (${profile?.email || user?.email || 'admin.office@campus.edu'})`}
         badge={
           <Badge variant="purple" size="sm" withDot>
-            SuperAdmin Console (Phase 2)
+            SuperAdmin Console (Phase 3 Active)
           </Badge>
         }
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Download size={14} />}
-            onClick={() => setExportModalOpen(true)}
-          >
-            Export Report
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download size={14} />}
+              onClick={() => setExportModalOpen(true)}
+            >
+              Export Report
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<FileText size={16} />}
+              onClick={() => navigate('/admin/complaints')}
+            >
+              All Complaints Console
+            </Button>
+          </div>
         }
       />
 
