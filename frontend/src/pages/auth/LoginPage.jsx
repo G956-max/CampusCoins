@@ -8,10 +8,11 @@ import {
   Mail,
   Lock,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Shield,
+  Info,
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -29,12 +30,12 @@ const loginSchema = z.object({
     .email('Please enter a valid email address'),
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters long'),
+    .min(1, 'Password is required'),
   rememberMe: z.boolean().optional(),
 });
 
 const LoginPage = () => {
-  const { login, loading } = useAuth();
+  const { login, loading, isSupabaseConfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,45 +61,60 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     setAuthError('');
     try {
-      const user = await login({ email: data.email, password: data.password });
-      const destination =
-        location.state?.from?.pathname ||
-        (user.role === ROLES.STAFF
-          ? '/staff/dashboard'
-          : user.role === ROLES.ADMIN
-          ? '/admin/dashboard'
-          : '/student/dashboard');
-      navigate(destination);
+      const result = await login({
+        email: data.email,
+        password: data.password,
+      });
+
+      const userRole = result?.profile?.role || result?.user?.user_metadata?.role || ROLES.STUDENT;
+
+      // Determine redirect path
+      let targetPath = '/student/dashboard';
+      if (userRole === ROLES.STAFF) targetPath = '/staff/dashboard';
+      if (userRole === ROLES.ADMIN) targetPath = '/admin/dashboard';
+
+      const destination = location.state?.from?.pathname || targetPath;
+      navigate(destination, { replace: true });
     } catch (err) {
-      setAuthError(err.message || 'Login failed. Please check your credentials.');
+      setAuthError(err.message || 'Incorrect email or password.');
     }
   };
 
-  // Quick Demo fill helpers for reviewers
+  // Demo Quick-Fill for reviewers
   const handleQuickDemo = async (role) => {
     if (role === ROLES.STUDENT) {
       setValue('email', 'alex.rivera@campus.edu');
       setValue('password', 'StudentPass123!');
-      await login({ email: 'alex.rivera@campus.edu', password: 'password', role: ROLES.STUDENT });
-      navigate('/student/dashboard');
+      try {
+        await login({ email: 'alex.rivera@campus.edu', password: 'StudentPass123!', role: ROLES.STUDENT });
+        navigate('/student/dashboard');
+      } catch (err) {
+        setAuthError(err.message);
+      }
     } else if (role === ROLES.STAFF) {
       setValue('email', 'd.vance@campus.edu');
       setValue('password', 'StaffPass123!');
-      await login({ email: 'd.vance@campus.edu', password: 'password', role: ROLES.STAFF });
-      navigate('/staff/dashboard');
+      try {
+        await login({ email: 'd.vance@campus.edu', password: 'StaffPass123!', role: ROLES.STAFF });
+        navigate('/staff/dashboard');
+      } catch (err) {
+        setAuthError(err.message);
+      }
     } else if (role === ROLES.ADMIN) {
       setValue('email', 'admin.office@campus.edu');
       setValue('password', 'AdminPass123!');
-      await login({ email: 'admin.office@campus.edu', password: 'password', role: ROLES.ADMIN });
-      navigate('/admin/dashboard');
+      try {
+        await login({ email: 'admin.office@campus.edu', password: 'AdminPass123!', role: ROLES.ADMIN });
+        navigate('/admin/dashboard');
+      } catch (err) {
+        setAuthError(err.message);
+      }
     }
   };
 
   const handleForgotPasswordSubmit = (e) => {
     e.preventDefault();
-    if (!forgotEmail || !forgotEmail.includes('@')) {
-      return;
-    }
+    if (!forgotEmail || !forgotEmail.includes('@')) return;
     setForgotSubmitted(true);
   };
 
@@ -126,13 +142,15 @@ const LoginPage = () => {
           </p>
         </div>
 
-        {/* Phase 1 1-Click Quick Demo Login */}
+        {/* Phase 2 Credentials & Demo Access Banner */}
         <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-glass">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2">
             <span className="flex items-center gap-1.5 text-coin-400">
-              <Sparkles size={14} /> Quick Demo Access (Phase 1)
+              <Sparkles size={14} /> Quick Demo Access
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">1-CLICK</span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {isSupabaseConfigured ? 'SUPABASE LIVE' : 'PREVIEW MODE'}
+            </span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <Button
@@ -166,8 +184,8 @@ const LoginPage = () => {
         <Card className="p-6 sm:p-8 border-slate-800/90 bg-slate-900/70">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {authError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle size={16} className="shrink-0" />
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 animate-fadeIn">
+                <AlertCircle size={16} className="shrink-0 text-rose-400" />
                 <span>{authError}</span>
               </div>
             )}
@@ -176,7 +194,7 @@ const LoginPage = () => {
             <Input
               label="College Email"
               type="email"
-              placeholder="e.g. alex@campus.edu"
+              placeholder="e.g. alex.rivera@campus.edu"
               leftIcon={<Mail size={18} />}
               error={errors.email?.message}
               {...register('email')}

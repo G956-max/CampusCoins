@@ -21,12 +21,15 @@ import { MOCK_STAFF_DATA } from '../../constants/mockData';
 import { useAuth } from '../../context/AuthContext';
 
 const StaffDashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
-  // Pulling from mock data structured for direct API replacement in Phase 2
+  // Pulling from mock data structured for Phase 3 ticket lifecycle
   const { metrics, assignedTasks } = MOCK_STAFF_DATA;
+
+  const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'David Vance';
+  const departmentName = profile?.department?.name || 'Campus Facilities & Maintenance';
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
@@ -35,13 +38,13 @@ const StaffDashboard = () => {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Header */}
+      {/* Header with real staff profile info */}
       <PageHeader
         title="Department Operations Console"
-        subtitle={`Welcome, ${user?.name || 'Technician'} • Facilities & Maintenance`}
+        subtitle={`Welcome, ${displayName} • ${departmentName} • ${profile?.email || user?.email || 'staff@campus.edu'}`}
         badge={
           <Badge variant="info" size="sm" withDot>
-            Staff Portal
+            Staff Portal (Phase 2)
           </Badge>
         }
         actions={
@@ -108,7 +111,7 @@ const StaffDashboard = () => {
             </p>
           </div>
           <Badge variant="purple" size="sm">
-            Phase 1 Mock Dispatch
+            Phase 3 Ticket Dispatch
           </Badge>
         </CardHeader>
 
@@ -177,7 +180,7 @@ const StaffDashboard = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={selectedTask ? `${selectedTask.id} - ${selectedTask.title}` : 'Task Details'}
-        description="Technician Work Order (Phase 2 Preview)"
+        description="Technician Work Order (Phase 3 Roadmap)"
         footer={
           <Button variant="primary" size="sm" onClick={() => setModalOpen(false)}>
             Close
@@ -206,8 +209,8 @@ const StaffDashboard = () => {
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed">
-              In Phase 2, resolving this ticket allows attaching a before/after resolution photo
-              to Supabase Storage and triggering automatic CampusCoins credit to the student.
+              In Phase 3, resolving this ticket will allow uploading before/after proof photos
+              directly to Supabase Storage and verifying SLA turnaround.
             </p>
           </div>
         )}

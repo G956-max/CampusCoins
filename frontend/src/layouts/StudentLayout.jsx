@@ -10,6 +10,7 @@ import {
   ChevronDown,
   LogOut,
   ExternalLink,
+  User,
 } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import BackendStatusBadge from '../components/layout/BackendStatusBadge';
@@ -18,8 +19,12 @@ import { ROLES, ROLE_LABELS } from '../constants/roles';
 
 const StudentLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const { user, logout, switchRole } = useAuth();
+  const { user, profile, wallet, logout, switchRole } = useAuth();
   const navigate = useNavigate();
+
+  const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'Alex Rivera';
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+  const coinBalance = wallet?.balance ?? 0;
 
   return (
     <div className="min-h-screen flex bg-[#080c14] text-slate-100">
@@ -75,13 +80,13 @@ const StudentLayout = () => {
           <div className="flex items-center gap-3">
             <BackendStatusBadge />
 
-            {/* Live CampusCoins Pill */}
+            {/* Live CampusCoins Pill from Real Wallet */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
               <Coins size={14} className="text-coin-400" />
-              <span>480 Coins</span>
+              <span>{coinBalance} Coins</span>
             </div>
 
-            {/* Role switch helper badge */}
+            {/* Role indicator */}
             <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
               <span className="w-2 h-2 rounded-full bg-campus-400" />
               <span>Role: Student</span>
@@ -90,22 +95,30 @@ const StudentLayout = () => {
             {/* Notification placeholder */}
             <button
               type="button"
-              title="Notifications (Phase 5)"
+              title="Notifications"
               className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors relative"
             >
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-campus-500" />
             </button>
 
-            {/* Quick Profile chip */}
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-              <div className="w-8 h-8 rounded-lg bg-campus-500/20 text-campus-300 border border-campus-500/30 flex items-center justify-center font-bold text-xs">
-                {user?.name?.charAt(0) || 'A'}
+            {/* Quick Profile chip linking to Profile */}
+            <Link
+              to="/student/profile"
+              className="flex items-center gap-2 pl-2 border-l border-slate-800 hover:opacity-80 transition-opacity"
+              title="View Profile"
+            >
+              <div className="w-8 h-8 rounded-lg bg-campus-500/20 text-campus-300 border border-campus-500/30 flex items-center justify-center font-bold text-xs overflow-hidden">
+                {profile?.profile_image_url ? (
+                  <img src={profile.profile_image_url} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  avatarLetter
+                )}
               </div>
               <span className="hidden xl:block text-xs font-semibold text-slate-200">
-                {user?.name || 'Alex Rivera'}
+                {displayName}
               </span>
-            </div>
+            </Link>
           </div>
         </header>
 

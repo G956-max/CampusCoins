@@ -14,11 +14,21 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import StudentDashboard from '../pages/student/StudentDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import ProfilePage from '../pages/profile/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 // Route Guard
-import ProtectedRoute from './ProtectedRoute';
+import ProtectedRoute, { StudentRoute, StaffRoute, AdminRoute } from './ProtectedRoute';
 import { ROLES } from '../constants/roles';
+import { useAuth } from '../context/AuthContext';
+
+// Profile Redirector helper component
+const ProfileRedirector = () => {
+  const { role } = useAuth();
+  if (role === ROLES.STAFF) return <Navigate to="/staff/profile" replace />;
+  if (role === ROLES.ADMIN) return <Navigate to="/admin/profile" replace />;
+  return <Navigate to="/student/profile" replace />;
+};
 
 const AppRoutes = () => {
   return (
@@ -30,16 +40,27 @@ const AppRoutes = () => {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
+      {/* Direct /profile shortcut */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfileRedirector />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Student Portal */}
       <Route
         path="/student"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.STUDENT, ROLES.ADMIN]}>
+          <StudentRoute>
             <StudentLayout />
-          </ProtectedRoute>
+          </StudentRoute>
         }
       >
         <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/student/dashboard" replace />} />
       </Route>
 
@@ -47,12 +68,13 @@ const AppRoutes = () => {
       <Route
         path="/staff"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+          <StaffRoute>
             <StaffLayout />
-          </ProtectedRoute>
+          </StaffRoute>
         }
       >
         <Route path="dashboard" element={<StaffDashboard />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/staff/dashboard" replace />} />
       </Route>
 
@@ -60,12 +82,13 @@ const AppRoutes = () => {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+          <AdminRoute>
             <AdminLayout />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       >
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
 

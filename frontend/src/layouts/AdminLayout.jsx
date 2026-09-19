@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Menu, X, Bell, Coins, ShieldCheck } from 'lucide-react';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Bell, Coins, ShieldCheck, User } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import BackendStatusBadge from '../components/layout/BackendStatusBadge';
 import { useAuth } from '../context/AuthContext';
@@ -8,8 +8,11 @@ import { ROLES } from '../constants/roles';
 
 const AdminLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
+
+  const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'Dr. Eleanor Vance';
+  const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen flex bg-[#080c14] text-slate-100">
@@ -78,14 +81,22 @@ const AdminLayout = () => {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500" />
             </button>
 
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center font-bold text-xs">
-                {user?.name?.charAt(0) || 'A'}
+            <Link
+              to="/admin/profile"
+              className="flex items-center gap-2 pl-2 border-l border-slate-800 hover:opacity-80 transition-opacity"
+              title="View Admin Profile"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center font-bold text-xs overflow-hidden">
+                {profile?.profile_image_url ? (
+                  <img src={profile.profile_image_url} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  avatarLetter
+                )}
               </div>
               <span className="hidden xl:block text-xs font-semibold text-slate-200">
-                {user?.name || 'Dr. Eleanor Vance'}
+                {displayName}
               </span>
-            </div>
+            </Link>
           </div>
         </header>
 

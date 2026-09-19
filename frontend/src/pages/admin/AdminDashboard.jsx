@@ -32,21 +32,23 @@ import { MOCK_ADMIN_DATA } from '../../constants/mockData';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
-  // Structured for straightforward substitution by API calls in Phase 2
+  // Structured for straightforward substitution by API calls in Phase 3
   const { metrics, categoryBreakdown, recentPlatformActivity } = MOCK_ADMIN_DATA;
+
+  const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'Dr. Eleanor Vance';
 
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Page Header */}
       <PageHeader
         title="Executive Campus Oversight"
-        subtitle="Campus-wide incident metrics, SLA performance, and CampusCoins token distribution."
+        subtitle={`Campus-wide incident metrics, SLA performance, and CampusCoins token distribution • ${displayName} (${profile?.email || user?.email || 'admin.office@campus.edu'})`}
         badge={
           <Badge variant="purple" size="sm" withDot>
-            SuperAdmin Console
+            SuperAdmin Console (Phase 2)
           </Badge>
         }
         actions={

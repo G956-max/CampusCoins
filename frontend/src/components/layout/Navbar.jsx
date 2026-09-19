@@ -57,18 +57,26 @@ const Navbar = () => {
             <BackendStatusBadge compact />
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <Button
                   size="sm"
                   variant="primary"
                   onClick={() => navigate(getDashboardPath())}
                   rightIcon={<ArrowRight size={14} />}
                 >
-                  Go to Dashboard
+                  Dashboard
                 </Button>
+                <Link to="/profile">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                  >
+                    Profile
+                  </Button>
+                </Link>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   onClick={logout}
                 >
                   Logout
@@ -159,6 +167,16 @@ const Navbar = () => {
                 <Button
                   variant="outline"
                   className="w-full justify-center"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate('/profile');
+                  }}
+                >
+                  My Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-center text-rose-400"
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);

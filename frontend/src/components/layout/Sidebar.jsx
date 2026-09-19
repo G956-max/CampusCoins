@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   Coins,
   LogOut,
@@ -20,7 +20,7 @@ import Badge from '../common/Badge';
 import { cn } from '../../utils/cn';
 
 const Sidebar = ({ role = ROLES.STUDENT }) => {
-  const { user, logout, switchRole } = useAuth();
+  const { user, profile, logout, switchRole } = useAuth();
   const navigate = useNavigate();
 
   let navItems = STUDENT_NAV_ITEMS;
@@ -32,6 +32,16 @@ const Sidebar = ({ role = ROLES.STUDENT }) => {
     if (newRole === ROLES.STUDENT) navigate('/student/dashboard');
     if (newRole === ROLES.STAFF) navigate('/staff/dashboard');
     if (newRole === ROLES.ADMIN) navigate('/admin/dashboard');
+  };
+
+  const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'Campus User';
+  const displayEmail = profile?.email || user?.email || 'user@campus.edu';
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+
+  const getProfilePath = () => {
+    if (role === ROLES.STAFF) return '/staff/profile';
+    if (role === ROLES.ADMIN) return '/admin/profile';
+    return '/student/profile';
   };
 
   return (
@@ -59,11 +69,11 @@ const Sidebar = ({ role = ROLES.STUDENT }) => {
         </NavLink>
       </div>
 
-      {/* Phase 1 Role Switcher Helper */}
+      {/* Phase 2 Role Switcher Helper for Testing */}
       <div className="p-3 mx-3 my-3 rounded-xl bg-slate-900/90 border border-slate-800">
         <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider">
           <span className="flex items-center gap-1">
-            <Sparkles size={12} className="text-coin-400" /> Phase 1 Preview
+            <Sparkles size={12} className="text-coin-400" /> Phase 2 Active
           </span>
           <span className="text-slate-500 font-mono">RBAC</span>
         </div>
@@ -171,24 +181,32 @@ const Sidebar = ({ role = ROLES.STUDENT }) => {
       {/* User Profile & Logout */}
       <div className="p-4 border-t border-slate-800/80 bg-slate-950/40">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0 font-bold text-sm">
-              {user?.name ? user.name.charAt(0) : 'U'}
+          <Link
+            to={getProfilePath()}
+            className="flex items-center gap-2.5 overflow-hidden group/prof flex-1 hover:opacity-80 transition-opacity"
+            title="View Profile"
+          >
+            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0 font-bold text-sm overflow-hidden">
+              {profile?.profile_image_url ? (
+                <img src={profile.profile_image_url} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                avatarLetter
+              )}
             </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-slate-200 truncate">
-                {user?.name || 'Campus User'}
+            <div className="overflow-hidden text-left">
+              <p className="text-xs font-semibold text-slate-200 truncate group-hover/prof:text-campus-400 transition-colors">
+                {displayName}
               </p>
               <p className="text-[11px] text-slate-400 truncate">
-                {user?.email || 'user@campus.edu'}
+                {displayEmail}
               </p>
             </div>
-          </div>
+          </Link>
 
           <button
             type="button"
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               navigate('/login');
             }}
             title="Logout"
