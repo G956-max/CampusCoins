@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, isSupabaseConfigured, mapAuthError } from '../config/supabase';
 import { ROLES } from '../constants/roles';
 
@@ -14,6 +14,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
+  // Stable ref to access current user without causing callback recreation
+  const userRef = useRef(null);
+  userRef.current = user;
+
   // Clear legacy mock localStorage keys
   useEffect(() => {
     try {
@@ -26,7 +30,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch user profile and wallet from Supabase
+  // Fetch user profile and wallet from Supabase (stable callback with zero dependencies)
   const fetchProfileAndWallet = useCallback(async (userId, fallbackUser = null) => {
     if (!supabase || !userId) return { profile: null, wallet: null };
 
@@ -71,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       // Fallback profile from user metadata if table row is not populated yet
       let activeProfile = profileData;
       if (!activeProfile) {
-        const u = fallbackUser || user;
+        const u = fallbackUser || userRef.current;
         const metaRole = u?.user_metadata?.role || ROLES.STUDENT;
         const metaName = u?.user_metadata?.full_name || u?.email?.split('@')[0] || 'User';
         activeProfile = {
@@ -97,11 +101,11 @@ export const AuthProvider = ({ children }) => {
       setWallet(activeWallet);
       return { profile: null, wallet: activeWallet };
     }
-  }, [user]);
+  }, []);
 
-  // Initialize Auth state
+  // Initialize Auth state - STRICTLY ONCE ON MOUNT
   useEffect(() => {
-    if (!isConfigured || !supabase) {
+    if (!supabase) {
       setLoading(false);
       return;
     }
@@ -137,6 +141,9 @@ export const AuthProvider = ({ children }) => {
       async (event, newSession) => {
         if (!mounted) return;
 
+        // Skip INITIAL_SESSION as initializeAuth handles startup
+        if (event === 'INITIAL_SESSION') return;
+
         if (newSession?.user) {
           setSession(newSession);
           setUser(newSession.user);
@@ -158,7 +165,7 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, [isConfigured, fetchProfileAndWallet]);
+  }, []);
 
   // Login handler - Pure Supabase Authentication
   const login = async ({ email, password }) => {
@@ -348,20 +355,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Mock role switcher for test convenience
+  // Role switcher (real database accounts only)
   const switchRole = (newRole) => {
-    const demoData = getDemoUserData(newRole);
-    setUser(demoData.user);
-    setProfile(demoData.profile);
-    setWallet(demoData.wallet);
-    localStorage.setItem('campuscoins_is_authenticated', 'true');
-    localStorage.setItem('campuscoins_mock_role', demoData.profile.role);
-    localStorage.setItem('campuscoins_mock_email', demoData.user.email);
-    localStorage.setItem('campuscoins_mock_user_id', demoData.user.id);
+    console.info('[Auth] Role switching requires logging into respective role credentials.');
   };
 
   // Computed state
-  const isAuthenticated = Boolean(user && (profile || !isConfigured));
+  const isAuthenticated = Boolean(user);
   const effectiveRole = profile?.role || user?.user_metadata?.role || ROLES.STUDENT;
 
   return (
