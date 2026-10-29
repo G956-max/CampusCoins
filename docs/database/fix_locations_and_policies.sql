@@ -3,7 +3,7 @@
 -- Platform: Supabase / PostgreSQL 15+
 -- ========================================================
 
--- 1. Ensure Reference Tables Have RLS and Public Read Policies
+-- 1. Enable Public Read on Reference Tables
 ALTER TABLE IF EXISTS public.departments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.buildings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.floors ENABLE ROW LEVEL SECURITY;
@@ -46,7 +46,7 @@ DROP POLICY IF EXISTS "Students insert complaint updates" ON public.complaint_up
 CREATE POLICY "Students insert complaint updates" ON public.complaint_updates 
 FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
--- 3. Seed Departments
+-- 3. Seed Departments (ON CONFLICT DO NOTHING ignores any existing id/code)
 INSERT INTO public.departments (id, name, code, description)
 VALUES
     ('d1000000-0000-0000-0000-000000000001', 'Computer Science & Engineering', 'CSE', 'Department of Computer Science & Engineering'),
@@ -54,7 +54,7 @@ VALUES
     ('d1000000-0000-0000-0000-000000000003', 'Electronics & Communication', 'ECE', 'Department of Electronics & Communication Engineering'),
     ('d1000000-0000-0000-0000-000000000004', 'Mechanical Engineering', 'MECH', 'Department of Mechanical Engineering'),
     ('d1000000-0000-0000-0000-000000000005', 'Campus Facilities & Maintenance', 'FAC', 'Estate office and maintenance services')
-ON CONFLICT (code) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- 4. Seed Buildings (Erode Sengunthar Engineering College, Perundurai 638057)
 INSERT INTO public.buildings (id, name, code, description, facility_type, latitude, longitude)
@@ -71,7 +71,7 @@ VALUES
     ('b1000000-0000-0000-0000-000000000010', 'Convention Center & Auditorium', 'AUD', '1,500-seat central auditorium for seminars and cultural events', 'auditorium', 11.31305, 77.55050),
     ('b1000000-0000-0000-0000-000000000011', 'Sports Arena & Athletic Grounds', 'SPRT', 'Track, basketball court, badminton, fitness center', 'sports', 11.31505, 77.55015),
     ('b1000000-0000-0000-0000-000000000012', 'Diamond Hostel & Student Residences', 'HSTL', 'Student residential living quarters and recreation mess', 'residential', 11.31475, 77.54925)
-ON CONFLICT (code) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- 5. Seed Floors
 INSERT INTO public.floors (id, building_id, floor_number, floor_name)
@@ -81,7 +81,7 @@ VALUES
     ('f1000000-0000-0000-0000-000000000003', 'b1000000-0000-0000-0000-000000000001', 2, 'Second Floor'),
     ('f1000000-0000-0000-0000-000000000004', 'b1000000-0000-0000-0000-000000000002', 0, 'Ground Floor Labs'),
     ('f1000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000002', 1, 'First Floor Computing Center')
-ON CONFLICT (building_id, floor_number) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- 6. Seed Rooms
 INSERT INTO public.rooms (id, floor_id, room_number, room_name, room_type, capacity)
@@ -92,7 +92,7 @@ VALUES
     ('r1000000-0000-0000-0000-000000000005', 'f1000000-0000-0000-0000-000000000002', 'Room 204', 'Seminar Room 204', 'classroom', 65),
     ('r1000000-0000-0000-0000-000000000007', 'f1000000-0000-0000-0000-000000000004', 'CS Lab 1', 'Advanced Software Engineering Lab', 'lab', 50),
     ('r1000000-0000-0000-0000-000000000008', 'f1000000-0000-0000-0000-000000000004', 'CS Lab 3', 'Systems & Networks Lab', 'lab', 45)
-ON CONFLICT (floor_id, room_number) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- 7. Seed SLA Configs
 INSERT INTO public.sla_configs (priority, target_response_hours, target_resolution_hours)
