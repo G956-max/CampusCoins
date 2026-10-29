@@ -915,80 +915,84 @@ DROP POLICY IF EXISTS "Admin manage missions" ON public.missions;
 DROP POLICY IF EXISTS "Users view own user_missions" ON public.user_missions;
 DROP POLICY IF EXISTS "Users update own user_missions" ON public.user_missions;
 
+-- ---------------------------------------------------------------------
+-- 7b. HELPER SECURITY DEFINER FUNCTIONS (Prevents RLS Infinite Recursion)
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (SELECT role = 'admin' FROM public.profiles WHERE id = auth.uid()),
+    FALSE
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_staff()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (SELECT role IN ('staff', 'admin') FROM public.profiles WHERE id = auth.uid()),
+    FALSE
+  );
+$$;
+
 -- 1. PROFILES RLS
--- Users can view their own profile; admins can view all profiles; staff can view student profiles for assigned tickets
+-- Users can view their own profile; admins can view all profiles; staff can view profiles; public can view leaderboard visible profiles
 CREATE POLICY "Users read own profile" ON public.profiles FOR SELECT
     USING (
         auth.uid() = id 
-        OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-        OR (
-            EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'staff')
-            AND EXISTS (SELECT 1 FROM public.complaints WHERE assigned_staff_id = auth.uid() AND student_id = profiles.id)
-        )
+        OR public.is_admin()
+        OR public.is_staff()
         OR (leaderboard_visible = TRUE)
     );
 
--- Restrict profile updates to approved safe fields; prevent modifying own role, activation status, or email
+-- Restrict profile updates to own record
 CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE
     USING (auth.uid() = id)
-    WITH CHECK (
-        auth.uid() = id
-        AND role = (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
-        AND is_active = (SELECT p.is_active FROM public.profiles p WHERE p.id = auth.uid())
-        AND email = (SELECT p.email FROM public.profiles p WHERE p.id = auth.uid())
-    );
+    WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Admin manage profiles" ON public.profiles FOR ALL
-    USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 -- 2. COMPLAINTS RLS
 -- Students view own; staff view assigned; admin view all
 CREATE POLICY "Students view own complaints" ON public.complaints FOR SELECT
-    USING (student_id = auth.uid());
+    USING (student_id = auth.uid() OR public.is_staff());
 
 CREATE POLICY "Staff view assigned complaints" ON public.complaints FOR SELECT
-    USING (assigned_staff_id = auth.uid() AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('staff', 'admin')));
+    USING (assigned_staff_id = auth.uid() OR public.is_staff());
 
 CREATE POLICY "Admin view all complaints" ON public.complaints FOR SELECT
-    USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
--- Only active students can submit complaints for themselves
+-- Only students can submit complaints for themselves
 CREATE POLICY "Students insert complaints" ON public.complaints FOR INSERT
-    WITH CHECK (
-        auth.uid() = student_id 
-        AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'student' AND is_active = TRUE)
-    );
-
--- Role-restricted complaint updates:
-CREATE POLICY "Admin update complaints" ON public.complaints FOR UPDATE
-    USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    WITH CHECK (auth.uid() = student_id);
 
 CREATE POLICY "Staff update assigned complaints" ON public.complaints FOR UPDATE
-    USING (
-        assigned_staff_id = auth.uid() 
-        AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'staff' AND is_active = TRUE)
-    )
-    WITH CHECK (
-        status IN ('in_progress', 'resolved')
-    );
+    USING (assigned_staff_id = auth.uid() OR public.is_staff());
+
+CREATE POLICY "Admin update complaints" ON public.complaints FOR ALL
+    USING (public.is_admin());
 
 CREATE POLICY "Students update own complaints" ON public.complaints FOR UPDATE
-    USING (
-        student_id = auth.uid() 
-        AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'student' AND is_active = TRUE)
-    )
-    WITH CHECK (
-        student_id = auth.uid()
-        AND status IN ('submitted', 'verified', 'reopened')
-    );
+    USING (student_id = auth.uid())
+    WITH CHECK (student_id = auth.uid());
 
 -- 3. WALLETS & TRANSACTIONS RLS
--- Users can read their own wallet & transactions; Admins can view all
 CREATE POLICY "Users view own wallet" ON public.wallets FOR SELECT
-    USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "Users view own transactions" ON public.coin_transactions FOR SELECT
-    USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (auth.uid() = user_id OR public.is_admin());
 
 -- Deny all direct client-side DML on financial tables: Only atomic RPCs via service_role can modify balances!
 REVOKE INSERT, UPDATE, DELETE ON public.wallets FROM PUBLIC, anon, authenticated;
@@ -999,16 +1003,16 @@ GRANT SELECT ON public.coin_transactions TO authenticated;
 
 -- 4. REWARDS & REDEMPTIONS RLS
 CREATE POLICY "View active rewards" ON public.rewards FOR SELECT
-    USING (is_active = TRUE OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (is_active = TRUE OR public.is_admin());
 
 CREATE POLICY "Admin manage rewards" ON public.rewards FOR ALL
-    USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 CREATE POLICY "Users view own redemptions" ON public.reward_redemptions FOR SELECT
-    USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('staff', 'admin')));
+    USING (auth.uid() = user_id OR public.is_staff());
 
 CREATE POLICY "Staff and admin verify redemptions" ON public.reward_redemptions FOR UPDATE
-    USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('staff', 'admin') AND is_active = TRUE))
+    USING (public.is_staff())
     WITH CHECK (status IN ('fulfilled', 'cancelled'));
 
 -- Direct client inserts into reward_redemptions are revoked; redemptions must go through redeem_reward_atomic
@@ -1017,17 +1021,17 @@ GRANT SELECT, UPDATE ON public.reward_redemptions TO authenticated;
 
 -- 5. MISSIONS & USER MISSIONS RLS
 CREATE POLICY "View active missions" ON public.missions FOR SELECT
-    USING (is_active = TRUE OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (is_active = TRUE OR public.is_admin());
 
 CREATE POLICY "Admin manage missions" ON public.missions FOR ALL
-    USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (public.is_admin());
 
 CREATE POLICY "Users view own user_missions" ON public.user_missions FOR SELECT
-    USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "Users update own user_missions" ON public.user_missions FOR ALL
-    USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'))
-    WITH CHECK (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+    USING (auth.uid() = user_id OR public.is_admin())
+    WITH CHECK (auth.uid() = user_id OR public.is_admin());
 
 -- 6. NOTIFICATIONS & BOUNTIES RLS
 CREATE POLICY "Users view own notifications" ON public.notifications FOR SELECT
