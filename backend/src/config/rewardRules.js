@@ -90,7 +90,7 @@ const INITIAL_BADGES = [
 const INITIAL_MISSIONS = [
   {
     id: 'mission-first-issue',
-    uuid: 'm0000000-0000-0000-0000-000000000001',
+    uuid: 'a0000000-0000-0000-0000-000000000001',
     title: 'Report Your First Issue',
     description: 'Submit a valid campus issue verified by administration.',
     rewardCoins: 25,
@@ -100,7 +100,7 @@ const INITIAL_MISSIONS = [
   },
   {
     id: 'mission-improve-3',
-    uuid: 'm0000000-0000-0000-0000-000000000002',
+    uuid: 'a0000000-0000-0000-0000-000000000002',
     title: 'Help Improve 3 Issues',
     description: 'Contribute to 3 verified campus complaints or updates.',
     rewardCoins: 50,
@@ -110,7 +110,7 @@ const INITIAL_MISSIONS = [
   },
   {
     id: 'mission-useful-evidence',
-    uuid: 'm0000000-0000-0000-0000-000000000003',
+    uuid: 'a0000000-0000-0000-0000-000000000003',
     title: 'Provide Useful Evidence',
     description: 'Attach clear, high-quality evidence verified on your reports.',
     rewardCoins: 30,
@@ -120,7 +120,7 @@ const INITIAL_MISSIONS = [
   },
   {
     id: 'mission-verify-resolution',
-    uuid: 'm0000000-0000-0000-0000-000000000004',
+    uuid: 'a0000000-0000-0000-0000-000000000004',
     title: 'Verify a Resolution',
     description: 'Inspect and confirm an issue marked resolved by technicians.',
     rewardCoins: 30,
@@ -130,7 +130,7 @@ const INITIAL_MISSIONS = [
   },
   {
     id: 'mission-7-days',
-    uuid: 'm0000000-0000-0000-0000-000000000005',
+    uuid: 'a0000000-0000-0000-0000-000000000005',
     title: 'Contribute for 7 Days',
     description: 'Log verified campus improvement activity across 7 days.',
     rewardCoins: 75,

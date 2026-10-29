@@ -1097,11 +1097,11 @@ ON CONFLICT (id) DO NOTHING;
 -- Seed Missions
 INSERT INTO public.missions (id, title, description, reward_coins, requirement_count, event_type, mission_type, icon)
 VALUES
-    ('m0000000-0000-0000-0000-000000000001', 'Report Your First Issue', 'Submit a valid campus issue verified by administration.', 25, 1, 'complaint_verified', 'standard', 'Sparkles'),
-    ('m0000000-0000-0000-0000-000000000002', 'Campus Guardian (3 Issues)', 'Contribute to 3 verified campus complaints or updates.', 50, 3, 'complaint_verified', 'standard', 'Shield'),
-    ('m0000000-0000-0000-0000-000000000003', 'Evidence Expert', 'Attach clear, high-quality photographic evidence on 2 reports.', 30, 2, 'evidence_verified', 'standard', 'Camera'),
-    ('m0000000-0000-0000-0000-000000000004', 'Resolution Inspector', 'Inspect and confirm an issue marked resolved by technicians.', 30, 1, 'resolution_verified', 'standard', 'CheckCircle2'),
-    ('m0000000-0000-0000-0000-000000000005', '7-Day Civic Habit', 'Log verified campus improvement activity across 7 days.', 75, 7, 'daily_activity', 'weekly', 'Calendar')
+    ('a0000000-0000-0000-0000-000000000001', 'Report Your First Issue', 'Submit a valid campus issue verified by administration.', 25, 1, 'complaint_verified', 'standard', 'Sparkles'),
+    ('a0000000-0000-0000-0000-000000000002', 'Campus Guardian (3 Issues)', 'Contribute to 3 verified campus complaints or updates.', 50, 3, 'complaint_verified', 'standard', 'Shield'),
+    ('a0000000-0000-0000-0000-000000000003', 'Evidence Expert', 'Attach clear, high-quality photographic evidence on 2 reports.', 30, 2, 'evidence_verified', 'standard', 'Camera'),
+    ('a0000000-0000-0000-0000-000000000004', 'Resolution Inspector', 'Inspect and confirm an issue marked resolved by technicians.', 30, 1, 'resolution_verified', 'standard', 'CheckCircle2'),
+    ('a0000000-0000-0000-0000-000000000005', '7-Day Civic Habit', 'Log verified campus improvement activity across 7 days.', 75, 7, 'daily_activity', 'weekly', 'Calendar')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Badges
