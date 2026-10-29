@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured, mapAuthError } from '../config/supabase';
 import { ROLES } from '../constants/roles';
-import { MOCK_STUDENT_DATA, MOCK_STAFF_DATA, MOCK_ADMIN_DATA } from '../constants/mockData';
 
 const AuthContext = createContext(null);
 
@@ -15,12 +14,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
+  // Clear legacy mock localStorage keys
+  useEffect(() => {
+    try {
+      localStorage.removeItem('campuscoins_mock_role');
+      localStorage.removeItem('campuscoins_mock_email');
+      localStorage.removeItem('campuscoins_mock_user_id');
+      localStorage.removeItem('campuscoins_is_authenticated');
+    } catch (e) {
+      // Ignore
+    }
+  }, []);
+
   // Fetch user profile and wallet from Supabase
-  const fetchProfileAndWallet = useCallback(async (userId) => {
+  const fetchProfileAndWallet = useCallback(async (userId, fallbackUser = null) => {
     if (!supabase || !userId) return { profile: null, wallet: null };
 
     try {
-      // 1. Fetch Profile with department join
+      // 1. Fetch Profile from Supabase profiles table
       const { data: profileData, error: profileErr } = await supabase
         .from('profiles')
         .select(`
@@ -37,17 +48,16 @@ export const AuthProvider = ({ children }) => {
           phone,
           is_active,
           created_at,
-          updated_at,
-          department:departments (id, name, code)
+          updated_at
         `)
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileErr && profileErr.code !== 'PGRST116') {
+      if (profileErr) {
         console.warn('[Auth] Profile fetch notice:', profileErr.message);
       }
 
-      // 2. Fetch Wallet
+      // 2. Fetch Wallet from Supabase wallets table
       const { data: walletData, error: walletErr } = await supabase
         .from('wallets')
         .select('*')
@@ -58,7 +68,23 @@ export const AuthProvider = ({ children }) => {
         console.warn('[Auth] Wallet fetch notice:', walletErr.message);
       }
 
-      const activeProfile = profileData || null;
+      // Fallback profile from user metadata if table row is not populated yet
+      let activeProfile = profileData;
+      if (!activeProfile) {
+        const u = fallbackUser || user;
+        const metaRole = u?.user_metadata?.role || ROLES.STUDENT;
+        const metaName = u?.user_metadata?.full_name || u?.email?.split('@')[0] || 'User';
+        activeProfile = {
+          id: userId,
+          full_name: metaName,
+          email: u?.email || '',
+          role: metaRole,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        };
+      }
+
+      // Real wallet balance (defaults to 0, never mock 480)
       const activeWallet = walletData || { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
 
       setProfile(activeProfile);
@@ -67,90 +93,19 @@ export const AuthProvider = ({ children }) => {
       return { profile: activeProfile, wallet: activeWallet };
     } catch (err) {
       console.error('[Auth] Error fetching profile/wallet:', err);
-      return { profile: null, wallet: null };
+      const activeWallet = { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+      setWallet(activeWallet);
+      return { profile: null, wallet: activeWallet };
     }
-  }, []);
-
-  // Helper to build a complete demo user and profile
-  const getDemoUserData = (targetRole = ROLES.STUDENT, email = null) => {
-    const cleanEmail = email?.trim().toLowerCase() || '';
-    let role = targetRole;
-    if (cleanEmail.includes('vance') || cleanEmail.includes('staff')) role = ROLES.STAFF;
-    if (cleanEmail.includes('admin')) role = ROLES.ADMIN;
-
-    let p = MOCK_STUDENT_DATA.profile;
-    let userId = 'b8000000-0000-0000-0000-000000000001';
-    let studentId = 'STU-2024-8842';
-    let staffId = null;
-    let balance = 480;
-
-    if (role === ROLES.STAFF) {
-      p = MOCK_STAFF_DATA.profile;
-      userId = 'b8000000-0000-0000-0000-000000000002';
-      studentId = null;
-      staffId = 'STF-402';
-      balance = 0;
-    } else if (role === ROLES.ADMIN) {
-      p = MOCK_ADMIN_DATA.profile;
-      userId = 'b8000000-0000-0000-0000-000000000003';
-      studentId = null;
-      staffId = 'ADM-001';
-      balance = 0;
-    }
-
-    const effectiveRole = p.role || role;
-    const userEmail = email ? email.trim() : p.email;
-
-    const mockUser = {
-      id: userId,
-      email: userEmail,
-      user_metadata: {
-        full_name: p.name,
-        role: effectiveRole,
-      },
-    };
-
-    const mockProf = {
-      ...p,
-      id: userId,
-      email: userEmail,
-      full_name: p.name,
-      role: effectiveRole,
-      student_id: studentId,
-      staff_id: staffId,
-      department_id: 'd0000000-0000-0000-0000-000000000001',
-      department: { id: 'd0000000-0000-0000-0000-000000000001', name: p.department || 'Computer Science and Engineering', code: 'CSE' },
-      is_active: true,
-    };
-
-    const mockWallet = {
-      balance: effectiveRole === ROLES.STUDENT ? balance : 0,
-      lifetime_earned: 650,
-      lifetime_spent: 170,
-    };
-
-    return { user: mockUser, profile: mockProf, wallet: mockWallet };
-  };
+  }, [user]);
 
   // Initialize Auth state
   useEffect(() => {
-    if (!isConfigured) {
-      // Phase 1 Mock Fallback when Supabase keys are not yet provided
-      const savedRole = localStorage.getItem('campuscoins_mock_role') || ROLES.STUDENT;
-      const savedEmail = localStorage.getItem('campuscoins_mock_email');
-      const isAuth = localStorage.getItem('campuscoins_is_authenticated') === 'true';
-
-      if (isAuth) {
-        const demoData = getDemoUserData(savedRole, savedEmail);
-        setUser(demoData.user);
-        setProfile(demoData.profile);
-        setWallet(demoData.wallet);
-      }
+    if (!isConfigured || !supabase) {
       setLoading(false);
       return;
     }
 
-    // Real Supabase Auth Initializer with Demo Mode persistence
     let mounted = true;
 
     const initializeAuth = async () => {
@@ -161,19 +116,12 @@ export const AuthProvider = ({ children }) => {
         if (mounted && initialSession?.user) {
           setSession(initialSession);
           setUser(initialSession.user);
-          await fetchProfileAndWallet(initialSession.user.id);
+          await fetchProfileAndWallet(initialSession.user.id, initialSession.user);
         } else if (mounted) {
-          // If no Supabase cloud session, check if a demo session was active
-          const isDemoAuth = localStorage.getItem('campuscoins_is_authenticated') === 'true';
-          const savedRole = localStorage.getItem('campuscoins_mock_role') || ROLES.STUDENT;
-          const savedEmail = localStorage.getItem('campuscoins_mock_email');
-
-          if (isDemoAuth) {
-            const demoData = getDemoUserData(savedRole, savedEmail);
-            setUser(demoData.user);
-            setProfile(demoData.profile);
-            setWallet(demoData.wallet);
-          }
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setWallet({ balance: 0, lifetime_earned: 0, lifetime_spent: 0 });
         }
       } catch (err) {
         console.error('[Auth] Initial session error:', err);
@@ -193,18 +141,13 @@ export const AuthProvider = ({ children }) => {
           setSession(newSession);
           setUser(newSession.user);
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-            await fetchProfileAndWallet(newSession.user.id);
+            await fetchProfileAndWallet(newSession.user.id, newSession.user);
           }
         } else {
-          // Only clear if not in demo mode
-          const isDemoAuth = localStorage.getItem('campuscoins_is_authenticated') === 'true';
-          const savedRole = localStorage.getItem('campuscoins_mock_role');
-          if (!isDemoAuth || !savedRole) {
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-            setWallet({ balance: 0, lifetime_earned: 0, lifetime_spent: 0 });
-          }
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setWallet({ balance: 0, lifetime_earned: 0, lifetime_spent: 0 });
         }
 
         setLoading(false);
@@ -217,29 +160,16 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isConfigured, fetchProfileAndWallet]);
 
-  // Login handler
-  const login = async ({ email, password, role = ROLES.STUDENT, isDemo = false }) => {
+  // Login handler - Pure Supabase Authentication
+  const login = async ({ email, password }) => {
     setLoading(true);
     setAuthError(null);
 
-    const isCampusEmail = email?.trim().toLowerCase().endsWith('@campus.edu');
-
-    // 1. Direct Demo Access (Instant login without network latency)
-    if (isDemo || !isConfigured) {
-      await new Promise((r) => setTimeout(r, 150));
-      const demoData = getDemoUserData(role, email);
-      setUser(demoData.user);
-      setProfile(demoData.profile);
-      setWallet(demoData.wallet);
-      localStorage.setItem('campuscoins_is_authenticated', 'true');
-      localStorage.setItem('campuscoins_mock_role', demoData.profile.role);
-      localStorage.setItem('campuscoins_mock_email', demoData.user.email);
-      localStorage.setItem('campuscoins_mock_user_id', demoData.user.id);
+    if (!supabase) {
       setLoading(false);
-      return demoData;
+      throw new Error('Supabase client is not available. Please verify your configuration.');
     }
 
-    // 2. Real Supabase Authentication
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -247,21 +177,6 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) {
-        // If Supabase rejected a campus demo email, fall back smoothly to demo access
-        if (isCampusEmail) {
-          console.info('[Auth] Supabase credentials rejected demo email. Falling back to local demo session.');
-          const demoData = getDemoUserData(role, email);
-          setUser(demoData.user);
-          setProfile(demoData.profile);
-          setWallet(demoData.wallet);
-          localStorage.setItem('campuscoins_is_authenticated', 'true');
-          localStorage.setItem('campuscoins_mock_role', demoData.profile.role);
-          localStorage.setItem('campuscoins_mock_email', demoData.user.email);
-          localStorage.setItem('campuscoins_mock_user_id', demoData.user.id);
-          setLoading(false);
-          return demoData;
-        }
-
         throw new Error(mapAuthError(error));
       }
 
@@ -269,8 +184,8 @@ export const AuthProvider = ({ children }) => {
       setSession(authSession);
       setUser(authUser);
 
-      // Fetch loaded profile
-      const { profile: loadedProfile, wallet: loadedWallet } = await fetchProfileAndWallet(authUser.id);
+      // Fetch loaded profile & wallet
+      const { profile: loadedProfile, wallet: loadedWallet } = await fetchProfileAndWallet(authUser.id, authUser);
 
       // Account status check
       if (loadedProfile && loadedProfile.is_active === false) {
@@ -278,28 +193,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Your account is currently inactive. Please contact the administrator.');
       }
 
-      // Clear any mock overrides for real Supabase users
-      localStorage.removeItem('campuscoins_mock_role');
-      localStorage.removeItem('campuscoins_mock_email');
-      localStorage.removeItem('campuscoins_mock_user_id');
-      localStorage.setItem('campuscoins_is_authenticated', 'true');
-
       setLoading(false);
       return { user: authUser, profile: loadedProfile, wallet: loadedWallet };
     } catch (err) {
-      if (isCampusEmail) {
-        const demoData = getDemoUserData(role, email);
-        setUser(demoData.user);
-        setProfile(demoData.profile);
-        setWallet(demoData.wallet);
-        localStorage.setItem('campuscoins_is_authenticated', 'true');
-        localStorage.setItem('campuscoins_mock_role', demoData.profile.role);
-        localStorage.setItem('campuscoins_mock_email', demoData.user.email);
-        localStorage.setItem('campuscoins_mock_user_id', demoData.user.id);
-        setLoading(false);
-        return demoData;
-      }
-
       setLoading(false);
       const friendlyMsg = mapAuthError(err);
       setAuthError(friendlyMsg);
@@ -307,35 +203,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Registration handler
+  // Registration handler - Pure Supabase signUp
   const register = async ({ fullName, collegeEmail, password, role }) => {
     setLoading(true);
     setAuthError(null);
 
+    if (!supabase) {
+      setLoading(false);
+      throw new Error('Supabase client is not available. Please verify your configuration.');
+    }
+
     // Enforce role security: public register only allows student or staff
     const assignedRole = role === ROLES.STAFF ? ROLES.STAFF : ROLES.STUDENT;
-
-    if (!isConfigured) {
-      // Mock Register Fallback
-      await new Promise((r) => setTimeout(r, 400));
-      const mockProf = {
-        name: fullName,
-        full_name: fullName,
-        email: collegeEmail,
-        role: assignedRole,
-        student_id: assignedRole === ROLES.STUDENT ? `STU-${Math.floor(1000 + Math.random() * 9000)}` : null,
-        staff_id: assignedRole === ROLES.STAFF ? `STF-${Math.floor(100 + Math.random() * 900)}` : null,
-        department: { name: 'Computer Science and Engineering', code: 'CSE' },
-      };
-
-      setUser({ id: 'mock-user-id', email: collegeEmail });
-      setProfile(mockProf);
-      setWallet({ balance: 0, lifetime_earned: 0, lifetime_spent: 0 });
-      localStorage.setItem('campuscoins_is_authenticated', 'true');
-      localStorage.setItem('campuscoins_mock_role', assignedRole);
-      setLoading(false);
-      return { user: { email: collegeEmail }, profile: mockProf, emailConfirmationRequired: false };
-    }
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -356,10 +235,33 @@ export const AuthProvider = ({ children }) => {
       const { user: authUser, session: authSession } = data;
       const emailConfirmationRequired = !authSession;
 
-      if (authUser && authSession) {
-        setSession(authSession);
-        setUser(authUser);
-        await fetchProfileAndWallet(authUser.id);
+      if (authUser) {
+        if (authSession) {
+          setSession(authSession);
+          setUser(authUser);
+          await fetchProfileAndWallet(authUser.id, authUser);
+        }
+
+        // Attempt direct upsert to profiles & wallets if database tables exist
+        try {
+          await supabase.from('profiles').upsert({
+            id: authUser.id,
+            full_name: fullName.trim(),
+            email: collegeEmail.trim(),
+            role: assignedRole,
+            is_active: true,
+          });
+
+          await supabase.from('wallets').upsert({
+            user_id: authUser.id,
+            balance: 0,
+            lifetime_earned: 0,
+            lifetime_spent: 0,
+          });
+        } catch (dbErr) {
+          // If tables not migrated yet, safe to proceed with user session
+          console.warn('[Register] Table auto-provision note:', dbErr.message);
+        }
       }
 
       setLoading(false);
@@ -378,7 +280,7 @@ export const AuthProvider = ({ children }) => {
   // Logout handler
   const logout = async () => {
     setLoading(true);
-    if (isConfigured && supabase) {
+    if (supabase) {
       try {
         await supabase.auth.signOut();
       } catch (err) {
@@ -390,10 +292,6 @@ export const AuthProvider = ({ children }) => {
     setProfile(null);
     setSession(null);
     setWallet({ balance: 0, lifetime_earned: 0, lifetime_spent: 0 });
-    localStorage.removeItem('campuscoins_is_authenticated');
-    localStorage.removeItem('campuscoins_mock_role');
-    localStorage.removeItem('campuscoins_mock_email');
-    localStorage.removeItem('campuscoins_mock_user_id');
     setLoading(false);
   };
 

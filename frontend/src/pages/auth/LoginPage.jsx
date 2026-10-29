@@ -10,7 +10,6 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -83,39 +82,6 @@ const LoginPage = () => {
     }
   };
 
-  // Demo Quick-Fill for reviewers and testers
-  const handleQuickDemo = async (role) => {
-    setAuthError('');
-    if (role === ROLES.STUDENT) {
-      setValue('email', 'alex.rivera@campus.edu');
-      setValue('password', 'StudentPass123!');
-      try {
-        await login({ email: 'alex.rivera@campus.edu', password: 'StudentPass123!', role: ROLES.STUDENT, isDemo: true });
-        navigate('/student/dashboard');
-      } catch (err) {
-        setAuthError(err.message);
-      }
-    } else if (role === ROLES.STAFF) {
-      setValue('email', 'd.vance@campus.edu');
-      setValue('password', 'StaffPass123!');
-      try {
-        await login({ email: 'd.vance@campus.edu', password: 'StaffPass123!', role: ROLES.STAFF, isDemo: true });
-        navigate('/staff/dashboard');
-      } catch (err) {
-        setAuthError(err.message);
-      }
-    } else if (role === ROLES.ADMIN) {
-      setValue('email', 'admin.office@campus.edu');
-      setValue('password', 'AdminPass123!');
-      try {
-        await login({ email: 'admin.office@campus.edu', password: 'AdminPass123!', role: ROLES.ADMIN, isDemo: true });
-        navigate('/admin/dashboard');
-      } catch (err) {
-        setAuthError(err.message);
-      }
-    }
-  };
-
   const handleForgotPasswordSubmit = (e) => {
     e.preventDefault();
     if (!forgotEmail || !forgotEmail.includes('@')) return;
@@ -146,42 +112,17 @@ const LoginPage = () => {
           </p>
         </div>
 
-        {/* Demo Access Banner */}
-        <div className="p-3.5 rounded-2xl bg-white border border-[#E1E9E2] shadow-xs">
-          <div className="flex items-center justify-between text-xs font-semibold text-[#17211B] mb-2">
-            <span className="flex items-center gap-1.5 text-[#168451]">
-              <Sparkles size={14} /> Quick Demo Access
-            </span>
-            <span className="text-[10px] text-[#647168] font-mono bg-[#EAF6EE] px-2 py-0.5 rounded-full text-[#168451]">
-              {isSupabaseConfigured ? 'SUPABASE LIVE' : 'PREVIEW MODE'}
-            </span>
+        {/* Quick link to Register */}
+        <div className="p-3.5 rounded-2xl bg-[#EAF6EE] border border-[#CBE7D4] flex items-center justify-between">
+          <div className="text-xs text-[#168451]">
+            <span className="font-bold">Don't have an account yet?</span>
+            <p className="text-[11px] text-[#647168]">Sign up with your college email to start reporting issues.</p>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickDemo(ROLES.STUDENT)}
-              className="text-xs border-[#CBE7D4] text-[#168451] hover:bg-[#EAF6EE]"
-            >
-              Student
+          <Link to="/register">
+            <Button size="sm" variant="primary" rightIcon={<ArrowRight size={14} />}>
+              Sign Up
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickDemo(ROLES.STAFF)}
-              className="text-xs border-sky-200 text-sky-700 hover:bg-sky-50"
-            >
-              Staff
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickDemo(ROLES.ADMIN)}
-              className="text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-            >
-              Admin
-            </Button>
-          </div>
+          </Link>
         </div>
 
         {/* Login Card */}

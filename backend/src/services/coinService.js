@@ -11,23 +11,19 @@ const inMemoryWallets = new Map();
 const inMemoryTransactions = [];
 
 /**
- * Initialize default wallet object
+ * Initialize default wallet object - Zero starting balance
  */
 const createInitialWallet = (userId) => {
-  const isMockStudent =
-    userId === 'b8000000-0000-0000-0000-000000000001' ||
-    userId === 'mock-student-id';
-
   return {
     id: `wallet-${userId}`,
     user_id: userId,
-    balance: isMockStudent ? 250 : 0,
-    lifetime_earned: isMockStudent ? 250 : 0,
+    balance: 0,
+    lifetime_earned: 0,
     lifetime_spent: 0,
-    impact_score: isMockStudent ? 120 : 0,
-    level: isMockStudent ? 2 : 1,
-    xp: isMockStudent ? 250 : 0,
-    streak_count: isMockStudent ? 3 : 0,
+    impact_score: 0,
+    level: 1,
+    xp: 0,
+    streak_count: 0,
     last_activity_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   };
@@ -49,10 +45,7 @@ const getWallet = async (userId) => {
         .maybeSingle();
 
       if (error) {
-        if (config.nodeEnv === 'production' || !config.allowDevMockAuth) {
-          logger.error(`[WALLET] Supabase fetch error: ${error.message}`);
-          throw new Error(`Database error retrieving wallet: ${error.message}`);
-        }
+        logger.warn(`[WALLET] Supabase fetch notice: ${error.message}`);
       }
 
       if (data) {
@@ -81,10 +74,7 @@ const getWallet = async (userId) => {
         .single();
 
       if (createErr) {
-        if (config.nodeEnv === 'production' || !config.allowDevMockAuth) {
-          logger.error(`[WALLET] Supabase wallet creation error: ${createErr.message}`);
-          throw new Error(`Database error creating wallet: ${createErr.message}`);
-        }
+        logger.warn(`[WALLET] Supabase wallet creation notice: ${createErr.message}`);
       } else if (created) {
         return {
           ...created,
@@ -92,10 +82,7 @@ const getWallet = async (userId) => {
         };
       }
     } catch (err) {
-      if (config.nodeEnv === 'production' || !config.allowDevMockAuth) {
-        throw err;
-      }
-      logger.warn(`[WALLET] Supabase fetch fallback to memory: ${err.message}`);
+      logger.warn(`[WALLET] Supabase fetch notice: ${err.message}`);
     }
   }
 

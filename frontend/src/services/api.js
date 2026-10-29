@@ -19,30 +19,20 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach Supabase JWT or Role Token
+// Request Interceptor: Attach Supabase JWT Token
 api.interceptors.request.use(
   async (config) => {
-    // 1. Check real Supabase session if configured
-    if (isSupabaseConfigured() && supabase) {
+    // Attach real Supabase session token
+    if (supabase) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token) {
           config.headers.Authorization = `Bearer ${session.access_token}`;
-          return config;
         }
       } catch (err) {
         console.warn('[API Interceptor] Supabase session retrieval notice:', err);
       }
     }
-
-    // 2. Fallback to mock session token from localStorage
-    const savedRole = localStorage.getItem('campuscoins_mock_role') || 'student';
-    const savedUserId = localStorage.getItem('campuscoins_mock_user_id') ||
-      (savedRole === 'staff' ? 'b8000000-0000-0000-0000-000000000002' : savedRole === 'admin' ? 'b8000000-0000-0000-0000-000000000003' : 'b8000000-0000-0000-0000-000000000001');
-
-    config.headers.Authorization = `Bearer mock-${savedRole}-token`;
-    config.headers['x-mock-role'] = savedRole;
-    config.headers['x-mock-user-id'] = savedUserId;
 
     return config;
   },

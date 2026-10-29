@@ -61,47 +61,8 @@ const getLeaderboard = async ({ limit = 50 } = {}) => {
     }
   }
 
-  // In-memory fallback
-  const mockProfiles = [
-    { id: 'usr-student-01', name: 'Gopinath K' },
-    { id: 'usr-student-02', name: 'Ananya Sharma' },
-    { id: 'usr-student-03', name: 'Rahul Verma' },
-    { id: 'usr-student-04', name: 'Priya Patel' },
-    { id: 'usr-student-05', name: 'Vikram Singh' },
-  ];
-
-  const allWallets = Array.from(inMemoryWallets.values());
-  // Ensure we have some sample data if empty
-  if (allWallets.length === 0) {
-    mockProfiles.forEach((p, i) => {
-      inMemoryWallets.set(p.id, {
-        user_id: p.id,
-        balance: 150 + i * 50,
-        impact_score: 200 + i * 120,
-        xp: 300 + i * 150,
-        level: i >= 3 ? 3 : 2,
-      });
-    });
-  }
-
-  const sorted = Array.from(inMemoryWallets.values())
-    .filter((w) => userPrivacySettings.get(w.user_id) !== false)
-    .sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0))
-    .slice(0, limit);
-
-  return sorted.map((w, idx) => {
-    const p = mockProfiles.find((m) => m.id === w.user_id);
-    const levelInfo = getLevelProgress(w.xp || 0);
-    return {
-      rank: idx + 1,
-      user_id: w.user_id,
-      displayName: formatDisplayName(p?.name || `Student ${idx + 1}`),
-      impactScore: w.impact_score || 0,
-      level: w.level || 1,
-      levelName: levelInfo.currentLevelName,
-      xp: w.xp || 0,
-    };
-  });
+  // Real data only: if database is empty, return empty array
+  return entries;
 };
 
 /**

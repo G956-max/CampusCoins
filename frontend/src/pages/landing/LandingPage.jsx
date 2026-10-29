@@ -125,8 +125,8 @@ const LandingPage = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3.5 rounded-2xl bg-[#EAF6EE] border border-[#CBE7D4] flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] font-bold text-[#168451]">Student Wallet</p>
-                      <p className="text-xl font-black text-[#17211B]">480 Coins</p>
+                      <p className="text-[11px] font-bold text-[#168451]">Campus Coins</p>
+                      <p className="text-xl font-black text-[#17211B]">Earn Rewards</p>
                     </div>
                     <div className="w-9 h-9 rounded-xl bg-white border border-[#CBE7D4] flex items-center justify-center text-[#168451] shadow-xs">
                       <Coins size={18} />
@@ -135,7 +135,7 @@ const LandingPage = () => {
                   <div className="p-3.5 rounded-2xl bg-[#F7FAF7] border border-[#E1E9E2] flex items-center justify-between">
                     <div>
                       <p className="text-[11px] font-medium text-[#647168]">SLA Resolution</p>
-                      <p className="text-xl font-black text-[#168451]">94.2%</p>
+                      <p className="text-xl font-black text-[#168451]">99.2%</p>
                     </div>
                     <div className="w-9 h-9 rounded-xl bg-white border border-[#E1E9E2] flex items-center justify-center text-[#168451] shadow-xs">
                       <TrendingUp size={18} />
@@ -179,14 +179,14 @@ const LandingPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs font-bold text-[#17211B] truncate">
-                        HVAC Unit Inspection &bull; CS Lab 3
+                        Campus Maintenance Request
                       </p>
                       <span className="text-[10px] text-amber-700 font-mono font-bold shrink-0 bg-amber-50 px-1.5 py-0.5 rounded">
                         In Progress
                       </span>
                     </div>
                     <p className="text-[11px] text-[#647168] mt-0.5">
-                      Technician dispatched &bull; David Vance
+                      Assigned to Campus Facilities Team
                     </p>
                     <div className="w-full bg-[#E1E9E2] h-1.5 rounded-full mt-2 overflow-hidden">
                       <div className="bg-[#168451] h-full w-2/3 rounded-full" />
@@ -366,13 +366,13 @@ const LandingPage = () => {
             stewardship. Join students and faculty in transforming your university today.
           </p>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" variant="primary" rightIcon={<ArrowRight size={18} />}>
-                Join CampusCoins
+            <Link to="/register" className="w-full sm:w-auto">
+              <Button size="lg" variant="primary" className="w-full sm:w-auto" rightIcon={<ArrowRight size={18} />}>
+                Get Started (Sign Up)
               </Button>
             </Link>
-            <Link to="/login">
-              <Button size="lg" variant="outline">
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
                 Login with College Email
               </Button>
             </Link>

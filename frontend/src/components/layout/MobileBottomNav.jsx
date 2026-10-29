@@ -20,7 +20,7 @@ const MobileBottomNav = () => {
 
   if (role === ROLES.STAFF) {
     return (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E1E9E2] shadow-lg">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E1E9E2] shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
         <div className="w-full max-w-md mx-auto h-16 px-2 flex items-center justify-around">
           <NavLink
             to="/staff"
@@ -89,7 +89,7 @@ const MobileBottomNav = () => {
 
   if (role === ROLES.ADMIN) {
     return (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E1E9E2] shadow-lg">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E1E9E2] shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
         <div className="w-full max-w-md mx-auto h-16 px-2 flex items-center justify-around">
           <NavLink
             to="/admin"
@@ -158,7 +158,7 @@ const MobileBottomNav = () => {
 
   // Student Default Navigation
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E1E9E2] shadow-lg">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E1E9E2] shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
       <div className="w-full max-w-md mx-auto h-16 px-2 flex items-center justify-around">
         {/* Tab 1: Home */}
         <NavLink

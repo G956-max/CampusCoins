@@ -84,80 +84,11 @@ const SEED_ROOMS = [
   { id: 'r1000000-0000-0000-0000-000000000008', floor_id: 'f1000000-0000-0000-0000-000000000004', room_number: 'CS Lab 3', room_name: 'Networks Lab', room_type: 'lab' },
 ];
 
-// In-memory repositories for fallback/testing
-const inMemoryComplaints = [
-  {
-    id: 'c1000000-0000-0000-0000-000000000001',
-    student_id: 'b8000000-0000-0000-0000-000000000001', // Alex Rivera
-    title: 'Broken Air Conditioning in CS Lab 3',
-    description: 'The split AC unit is making loud rattling noises and blowing room-temperature air during afternoon laboratory sessions.',
-    category: 'Electrical',
-    status: 'assigned',
-    priority: 'high',
-    building_id: 'b1000000-0000-0000-0000-000000000002',
-    floor_id: 'f1000000-0000-0000-0000-000000000004',
-    room_id: 'r1000000-0000-0000-0000-000000000008',
-    assigned_staff_id: 'b8000000-0000-0000-0000-000000000002', // David Vance
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-    resolved_at: null,
-  },
-  {
-    id: 'c1000000-0000-0000-0000-000000000002',
-    student_id: 'b8000000-0000-0000-0000-000000000001',
-    title: 'Water Dispenser Sensor Malfunction',
-    description: 'Water dispenser on 1st floor does not stop automatically when tumbler is removed.',
-    category: 'Plumbing',
-    status: 'resolved',
-    priority: 'medium',
-    building_id: 'b1000000-0000-0000-0000-000000000001',
-    floor_id: 'f1000000-0000-0000-0000-000000000002',
-    room_id: null,
-    assigned_staff_id: 'b8000000-0000-0000-0000-000000000002',
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    updated_at: new Date(Date.now() - 3600000).toISOString(),
-    resolved_at: new Date(Date.now() - 3600000).toISOString(),
-  },
-];
-
+// In-memory repositories for runtime state
+const inMemoryComplaints = [];
 const inMemoryEvidence = [];
-const inMemoryUpdates = [
-  {
-    id: 'u1000000-0000-0000-0000-000000000001',
-    complaint_id: 'c1000000-0000-0000-0000-000000000001',
-    updated_by: 'b8000000-0000-0000-0000-000000000001',
-    status: 'submitted',
-    comment: 'Complaint submitted by student.',
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  },
-  {
-    id: 'u1000000-0000-0000-0000-000000000002',
-    complaint_id: 'c1000000-0000-0000-0000-000000000001',
-    updated_by: 'b8000000-0000-0000-0000-000000000003',
-    status: 'under_review',
-    comment: 'Complaint reviewed and verified by campus administration.',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'u1000000-0000-0000-0000-000000000003',
-    complaint_id: 'c1000000-0000-0000-0000-000000000001',
-    updated_by: 'b8000000-0000-0000-0000-000000000003',
-    status: 'assigned',
-    comment: 'Assigned to technician David Vance (Campus Facilities & Maintenance).',
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-];
-
-const inMemoryAssignments = [
-  {
-    id: 'a1000000-0000-0000-0000-000000000001',
-    complaint_id: 'c1000000-0000-0000-0000-000000000001',
-    staff_id: 'b8000000-0000-0000-0000-000000000002',
-    assigned_by: 'b8000000-0000-0000-0000-000000000003',
-    assigned_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-    completed_at: null,
-  },
-];
+const inMemoryUpdates = [];
+const inMemoryAssignments = [];
 
 class ComplaintService {
   /**

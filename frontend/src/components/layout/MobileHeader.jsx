@@ -57,7 +57,7 @@ const MobileHeader = ({ title: overrideTitle, onOpenMenu }) => {
       : '/student/profile';
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E1E9E2] h-14 px-3 flex items-center justify-between shadow-xs">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E1E9E2] h-14 px-3 flex items-center justify-between shadow-xs">
       {/* Left section: Hamburger or Back Button + Title */}
       <div className="flex items-center gap-2 min-w-0">
         {isRootTab ? (

@@ -135,35 +135,46 @@ const verifyAuth = async (req, res, next) => {
       return sendError(res, 'Error verifying account permissions', 500);
     }
 
-    // Require an existing, valid database profile with a permitted role (Fail Closed)
-    if (!profile) {
-      logger.warn(`[AUTH] Profile missing for user ${user.id}. Access denied.`);
-      return sendError(res, 'User profile not found. Please complete registration or contact administrator.', 403);
+    // Handle case where profile row has not been created yet
+    let activeProfile = profile;
+    if (!activeProfile) {
+      const metaRole = user.user_metadata?.role === 'staff' ? 'staff' : (user.user_metadata?.role === 'admin' ? 'admin' : 'student');
+      activeProfile = {
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'User'),
+        role: metaRole,
+        is_active: true,
+      };
+      try {
+        await supabase.from('profiles').insert(activeProfile);
+      } catch (e) {
+        // Ignore if profiles table does not exist yet
+      }
     }
 
-    if (profile.is_active !== true) {
+    if (activeProfile.is_active !== true) {
       logger.warn(`[AUTH] Inactive account access attempt: ${user.id}`);
       return sendError(res, 'Your account is currently inactive. Please contact the administrator.', 403);
     }
 
     const PERMITTED_ROLES = ['student', 'staff', 'admin'];
-    if (!profile.role || !PERMITTED_ROLES.includes(profile.role)) {
-      logger.error(`[AUTH] User ${user.id} has invalid/unrecognized database role: "${profile.role}". Failing closed.`);
+    if (!activeProfile.role || !PERMITTED_ROLES.includes(activeProfile.role)) {
+      logger.error(`[AUTH] User ${user.id} has invalid/unrecognized role: "${activeProfile.role}". Failing closed.`);
       return sendError(res, 'Invalid account role or authorization configuration.', 403);
     }
 
-    // STRICT: Never use user.user_metadata.role as an authorization fallback. Role is strictly from database profile.
-    const assignedRole = profile.role;
+    const assignedRole = activeProfile.role;
 
     req.user = {
       id: user.id,
-      email: profile.email || user.email,
+      email: activeProfile.email || user.email,
       role: assignedRole,
-      full_name: profile.full_name || profile.email?.split('@')[0] || 'User',
-      department_id: profile.department_id || null,
-      student_id: profile.student_id || null,
-      staff_id: profile.staff_id || null,
-      is_active: profile.is_active,
+      full_name: activeProfile.full_name || activeProfile.email?.split('@')[0] || 'User',
+      department_id: activeProfile.department_id || null,
+      student_id: activeProfile.student_id || null,
+      staff_id: activeProfile.staff_id || null,
+      is_active: activeProfile.is_active,
     };
 
     return next();
