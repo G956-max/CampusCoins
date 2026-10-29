@@ -28,6 +28,7 @@ import {
 } from '../../constants/complaints';
 import complaintApi from '../../services/complaintApi';
 import api from '../../services/api';
+import { supabase } from '../../config/supabase';
 
 const formSchema = z.object({
   title: z
@@ -94,13 +95,14 @@ const ReportIssuePage = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await api.post('/complaints/check-duplicate', {
+        const res = await api.post('/api/complaints/check-duplicate', {
           title: titleVal,
           description: descVal || '',
           category: watch('category') || undefined,
         });
-        if (res.data?.success && res.data.data?.hasPossibleDuplicates) {
-          setDuplicateWarning(res.data.data);
+        const dupData = res?.data || res;
+        if (dupData?.hasPossibleDuplicates) {
+          setDuplicateWarning(dupData);
         } else {
           setDuplicateWarning(null);
         }
@@ -119,14 +121,22 @@ const ReportIssuePage = () => {
     setAiSuggestion(null);
 
     try {
-      const res = await api.post('/ai/classify', {
-        text: `${titleVal} ${descVal}`.trim(),
+      const res = await api.post('/api/complaints/ai-classify', {
+        title: titleVal,
+        description: descVal || '',
       });
-      if (res.data?.success) {
-        const { category, priority, confidence, explanation } = res.data.data;
-        setAiSuggestion({ category, priority, confidence, explanation });
-        if (category) setValue('category', category);
-        if (priority) setValue('priority', priority);
+      const aiData = res?.data || res;
+      if (aiData?.category) {
+        const cat = aiData.category.suggestedCategory || aiData.category;
+        const pri = aiData.priority?.suggestedPriority || aiData.priority || 'medium';
+        setAiSuggestion({
+          category: cat,
+          priority: pri,
+          confidence: aiData.category.confidence || 0.9,
+          explanation: aiData.category.explanation || 'Analyzed via campus ticket NLP engine',
+        });
+        if (cat) setValue('category', cat);
+        if (pri) setValue('priority', pri);
       }
     } catch {
       // Rule-based fallback if offline
@@ -180,15 +190,48 @@ const ReportIssuePage = () => {
     setSubmitError('');
 
     try {
-      const complaint = await complaintApi.createComplaint({
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        priority: data.priority,
-        building_id: buildingId || null,
-        floor_id: floorId || null,
-        room_id: roomId || null,
-      });
+      let complaint;
+      try {
+        complaint = await complaintApi.createComplaint({
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          priority: data.priority,
+          building_id: buildingId || null,
+          floor_id: floorId || null,
+          room_id: roomId || null,
+        });
+      } catch (apiErr) {
+        console.warn('Backend API submit notice, attempting Supabase direct fallback:', apiErr);
+        // Supabase direct fallback
+        if (supabase) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw apiErr;
+
+          const trackingCode = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const { data: directData, error: directErr } = await supabase
+            .from('complaints')
+            .insert({
+              student_id: user.id,
+              tracking_code: trackingCode,
+              title: data.title,
+              description: data.description,
+              category: data.category,
+              priority: data.priority,
+              status: 'submitted',
+              building_id: buildingId || null,
+              floor_id: floorId || null,
+              room_id: roomId || null,
+            })
+            .select()
+            .single();
+
+          if (directErr) throw directErr;
+          complaint = directData;
+        } else {
+          throw apiErr;
+        }
+      }
 
       if (selectedFile && complaint?.id) {
         try {

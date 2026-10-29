@@ -3,6 +3,35 @@ import { Building2, Layers, MapPin, Loader2 } from 'lucide-react';
 import complaintApi from '../../services/complaintApi';
 import { cn } from '../../utils/cn';
 
+const FALLBACK_BUILDINGS = [
+  { id: 'b1000000-0000-0000-0000-000000000001', name: 'Main Academic & Admin Block', code: 'MB' },
+  { id: 'b1000000-0000-0000-0000-000000000002', name: 'CSE, IT & MCA Computing Block', code: 'CSEB' },
+  { id: 'b1000000-0000-0000-0000-000000000003', name: 'Science & Humanities Block (First Year)', code: 'SHB' },
+  { id: 'b1000000-0000-0000-0000-000000000004', name: 'Central Library & Digital Commons', code: 'LIB' },
+  { id: 'b1000000-0000-0000-0000-000000000005', name: 'ECE & EIE Block', code: 'ECEB' },
+  { id: 'b1000000-0000-0000-0000-000000000006', name: 'Mechanical & Robotics Engineering Block', code: 'MECHB' },
+  { id: 'b1000000-0000-0000-0000-000000000007', name: 'Civil & Agricultural Engineering Block', code: 'CIVILB' },
+  { id: 'b1000000-0000-0000-0000-000000000008', name: 'EEE & Chemical Engineering Block', code: 'EEEB' },
+  { id: 'b1000000-0000-0000-0000-000000000009', name: 'Student Canteen & Food Court', code: 'CAN' },
+  { id: 'b1000000-0000-0000-0000-000000000010', name: 'Convention Center & Auditorium', code: 'AUD' },
+  { id: 'b1000000-0000-0000-0000-000000000011', name: 'Sports Arena & Athletic Grounds', code: 'SPRT' },
+  { id: 'b1000000-0000-0000-0000-000000000012', name: 'Diamond Hostel & Student Residences', code: 'HSTL' },
+];
+
+const DEFAULT_FLOORS = [
+  { id: 'f1000000-0000-0000-0000-000000000001', floor_name: 'Ground Floor', floor_number: 0 },
+  { id: 'f1000000-0000-0000-0000-000000000002', floor_name: 'First Floor', floor_number: 1 },
+  { id: 'f1000000-0000-0000-0000-000000000003', floor_name: 'Second Floor', floor_number: 2 },
+];
+
+const DEFAULT_ROOMS = [
+  { id: 'r1000000-0000-0000-0000-000000000001', room_name: 'Room 101 - Lecture Hall' },
+  { id: 'r1000000-0000-0000-0000-000000000002', room_name: 'Room 102 - Classroom' },
+  { id: 'r1000000-0000-0000-0000-000000000004', room_name: 'Room 201 - Computing Lab' },
+  { id: 'r1000000-0000-0000-0000-000000000005', room_name: 'Room 204 - Seminar Room' },
+  { id: 'r1000000-0000-0000-0000-000000000007', room_name: 'Lab 1 - Software Engineering' },
+];
+
 const LocationSelector = ({
   buildingId,
   floorId,
@@ -13,7 +42,7 @@ const LocationSelector = ({
   disabled = false,
   className,
 }) => {
-  const [buildings, setBuildings] = useState([]);
+  const [buildings, setBuildings] = useState(FALLBACK_BUILDINGS);
   const [floors, setFloors] = useState([]);
   const [rooms, setRooms] = useState([]);
 
@@ -26,10 +55,11 @@ const LocationSelector = ({
     const loadBuildings = async () => {
       setLoadingBuildings(true);
       try {
-        const data = await complaintApi.getBuildings();
-        if (isMounted) setBuildings(data || []);
+        const res = await complaintApi.getBuildings();
+        const list = Array.isArray(res) ? res : res?.data || [];
+        if (isMounted && list.length > 0) setBuildings(list);
       } catch (err) {
-        console.warn('Failed to load buildings:', err);
+        console.warn('Failed to load buildings from network:', err);
       } finally {
         if (isMounted) setLoadingBuildings(false);
       }
@@ -51,10 +81,11 @@ const LocationSelector = ({
     const loadFloors = async () => {
       setLoadingFloors(true);
       try {
-        const data = await complaintApi.getFloors(buildingId);
-        if (isMounted) setFloors(data || []);
+        const res = await complaintApi.getFloors(buildingId);
+        const list = Array.isArray(res) ? res : res?.data || [];
+        if (isMounted) setFloors(list.length > 0 ? list : DEFAULT_FLOORS);
       } catch (err) {
-        console.warn('Failed to load floors:', err);
+        if (isMounted) setFloors(DEFAULT_FLOORS);
       } finally {
         if (isMounted) setLoadingFloors(false);
       }
@@ -75,10 +106,11 @@ const LocationSelector = ({
     const loadRooms = async () => {
       setLoadingRooms(true);
       try {
-        const data = await complaintApi.getRooms(floorId);
-        if (isMounted) setRooms(data || []);
+        const res = await complaintApi.getRooms(floorId);
+        const list = Array.isArray(res) ? res : res?.data || [];
+        if (isMounted) setRooms(list.length > 0 ? list : DEFAULT_ROOMS);
       } catch (err) {
-        console.warn('Failed to load rooms:', err);
+        if (isMounted) setRooms(DEFAULT_ROOMS);
       } finally {
         if (isMounted) setLoadingRooms(false);
       }

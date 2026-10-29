@@ -19,9 +19,14 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach Supabase JWT Token
+// Request Interceptor: Attach Supabase JWT Token & ensure /api prefix
 api.interceptors.request.use(
   async (config) => {
+    // Ensure all internal routes have /api prefix so Vercel rewrites them to the Express backend
+    if (config.url && !config.url.startsWith('/api') && !config.url.startsWith('http')) {
+      config.url = `/api${config.url.startsWith('/') ? '' : '/'}${config.url}`;
+    }
+
     // Attach real Supabase session token
     if (supabase) {
       try {

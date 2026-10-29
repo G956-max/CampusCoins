@@ -273,13 +273,12 @@ const CampusMapPage = () => {
         }
       ).addTo(map);
     } else if (mapMode === 'google-streets' || mapMode === 'carto') {
-      // CartoDB Voyager Clean Vector Campus Style (100% reliable)
+      // High-Contrast Clean Streets (100% Free, Zero API Keys, No Watermarks)
       baseTileLayerRef.current = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
-          attribution: '&copy; CartoDB Voyager | ESEC Campus GIS',
+          attribution: '&copy; OpenStreetMap contributors | ESEC Campus Map',
           maxZoom: 19,
-          subdomains: 'abcd',
         }
       ).addTo(map);
     } else {
