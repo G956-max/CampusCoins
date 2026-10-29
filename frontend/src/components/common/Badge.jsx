@@ -2,23 +2,23 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 
 const variantClasses = {
-  default: 'bg-slate-800 text-slate-300 border-slate-700',
-  success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  warning: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  danger: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-  info: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-  purple: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-  gold: 'bg-amber-400/15 text-amber-300 border-amber-400/40',
+  default: 'bg-[#F7FAF7] text-[#647168] border-[#E1E9E2]',
+  success: 'bg-[#EAF6EE] text-[#168451] border-[#CBE7D4]',
+  warning: 'bg-[#FEF9EE] text-[#B7791F] border-[#F8E7C5]',
+  danger: 'bg-[#FDF2F2] text-[#C43D3D] border-[#F8D2D2]',
+  info: 'bg-[#F0F7FF] text-[#1E6091] border-[#D0E5FA]',
+  purple: 'bg-[#F5F3FF] text-[#5B21B6] border-[#DDD6FE]',
+  gold: 'bg-[#FEF9EE] text-[#B7791F] border-[#F8E7C5] font-semibold',
 };
 
 const dotColors = {
-  default: 'bg-slate-400',
-  success: 'bg-emerald-400',
-  warning: 'bg-amber-400',
-  danger: 'bg-rose-400',
-  info: 'bg-sky-400',
-  purple: 'bg-indigo-400',
-  gold: 'bg-amber-300 animate-pulse',
+  default: 'bg-[#647168]',
+  success: 'bg-[#168451]',
+  warning: 'bg-[#B7791F]',
+  danger: 'bg-[#C43D3D]',
+  info: 'bg-[#1E6091]',
+  purple: 'bg-[#5B21B6]',
+  gold: 'bg-[#B7791F] animate-pulse',
 };
 
 const Badge = ({
@@ -32,8 +32,8 @@ const Badge = ({
   return (
     <span
       className={cn(
-        'inline-flex items-center font-medium border rounded-full tracking-wide',
-        size === 'sm' ? 'px-2 py-0.5 text-[11px] gap-1.5' : 'px-2.5 py-1 text-xs gap-1.5',
+        'inline-flex items-center font-medium border rounded-full tracking-normal',
+        size === 'sm' ? 'px-2 py-0.5 text-[11px] gap-1.5' : 'px-2.5 py-0.5 text-xs gap-1.5',
         variantClasses[variant] || variantClasses.default,
         className
       )}

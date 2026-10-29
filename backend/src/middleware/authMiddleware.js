@@ -1,9 +1,10 @@
+const config = require('../config/env');
 const { getSupabaseClient } = require('../config/supabase');
 const { sendError } = require('../utils/apiResponse');
 const logger = require('../utils/logger');
 
 /**
- * Mock Profile Registry for Offline / Preview Evaluation
+ * Predefined test / mock profiles for offline development and automated test suites
  */
 const MOCK_PROFILES = {
   'mock-student-id': {
@@ -15,7 +16,7 @@ const MOCK_PROFILES = {
   },
   'mock-staff-id': {
     id: 'b8000000-0000-0000-0000-000000000002',
-    email: 'd.vance@campus.edu',
+    email: 'david.vance@campus.edu',
     full_name: 'David Vance',
     role: 'staff',
     staff_id: 'STF-402',
@@ -26,90 +27,155 @@ const MOCK_PROFILES = {
     full_name: 'Dr. Eleanor Vance',
     role: 'admin',
   },
+  'other-student-999': {
+    id: 'b8000000-0000-0000-0000-000000000999',
+    email: 'other.student@campus.edu',
+    full_name: 'Jordan Lee (Other Student)',
+    role: 'student',
+    student_id: 'STU-2024-9999',
+  },
+  'unassigned-staff-999': {
+    id: 'b8000000-0000-0000-0000-000000000998',
+    email: 'unassigned.staff@campus.edu',
+    full_name: 'Unassigned Staff Member',
+    role: 'staff',
+    staff_id: 'STF-998',
+  },
 };
 
 /**
- * Authenticate JWT from Supabase or Fallback Test Header
+ * Verify Authentication Middleware
+ * Enforces production security: Never trusts mock headers or client-supplied roles in production.
+ * Supports explicit development/test mock auth only when ALLOW_DEV_MOCK_AUTH=true or NODE_ENV=test.
  */
 const verifyAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const mockRoleHeader = req.headers['x-mock-role'];
   const mockUserIdHeader = req.headers['x-mock-user-id'];
 
-  // 1. Mock / Preview Fallback (via header or mock token)
-  if (mockRoleHeader || mockUserIdHeader || (authHeader && authHeader.includes('mock-'))) {
-    const role = mockRoleHeader || (authHeader?.includes('staff') ? 'staff' : authHeader?.includes('admin') ? 'admin' : 'student');
-    let baseProfile = MOCK_PROFILES['mock-student-id'];
-    if (role === 'staff') baseProfile = MOCK_PROFILES['mock-staff-id'];
-    if (role === 'admin') baseProfile = MOCK_PROFILES['mock-admin-id'];
+  // Check if mock authentication was attempted
+  const isMockAuthAttempt = Boolean(
+    mockRoleHeader ||
+    mockUserIdHeader ||
+    (authHeader && authHeader.includes('mock-'))
+  );
+
+  // 1. Production Security Guard: Reject mock auth unconditionally in production
+  if (isMockAuthAttempt) {
+    if (config.nodeEnv === 'production' || !config.allowDevMockAuth) {
+      logger.warn('[SECURITY ALERT] Unauthorized mock authentication attempt rejected in production.');
+      return sendError(res, 'Invalid authentication credentials. Mock authentication is disabled in this environment.', 401);
+    }
+
+    // Explicit dev/test mode mock authorization:
+    let role = mockRoleHeader;
+    if (!role && authHeader) {
+      if (authHeader.includes('admin')) role = 'admin';
+      else if (authHeader.includes('staff')) role = 'staff';
+      else role = 'student';
+    }
+    if (!role) role = 'student';
+
+    // Resolve user ID & profile
+    const userIdKey = mockUserIdHeader || (role === 'staff' ? 'mock-staff-id' : role === 'admin' ? 'mock-admin-id' : 'mock-student-id');
+    const mockProfile = MOCK_PROFILES[userIdKey] || {
+      id: mockUserIdHeader || `mock-${role}-id`,
+      email: `${role}.dev@campus.edu`,
+      full_name: `Dev ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+      role,
+    };
 
     req.user = {
-      ...baseProfile,
-      role,
-      id: mockUserIdHeader || baseProfile.id,
+      ...mockProfile,
+      role: mockProfile.role || role,
     };
+
     return next();
   }
 
+  // 2. Real JWT Authentication via Supabase
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return sendError(res, 'Authentication token missing or invalid', 401);
   }
 
   const token = authHeader.split(' ')[1];
-  const supabase = getSupabaseClient();
-
-  // 2. Real Supabase JWT if client is configured
-  if (supabase && token) {
-    try {
-      const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-
-      if (authErr || !user) {
-        logger.warn(`Invalid Supabase token: ${authErr?.message || 'User not found'}`);
-        return sendError(res, 'Invalid or expired authentication session', 401);
-      }
-
-      // Fetch Profile to load server-side verified role
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileErr || !profile) {
-        const fallbackRole = user.user_metadata?.role || 'student';
-        req.user = {
-          id: user.id,
-          email: user.email,
-          role: fallbackRole,
-          full_name: user.user_metadata?.full_name || user.email.split('@')[0],
-        };
-        return next();
-      }
-
-      if (profile.is_active === false) {
-        return sendError(res, 'Your account is currently inactive. Please contact administrator.', 403);
-      }
-
-      req.user = {
-        id: profile.id,
-        email: profile.email,
-        role: profile.role,
-        full_name: profile.full_name,
-        department_id: profile.department_id,
-      };
-
-      return next();
-    } catch (err) {
-      logger.error('Error during Supabase token verification:', err.message);
-      return sendError(res, 'Authentication verification failed', 401);
-    }
+  if (!token || token.trim() === '') {
+    return sendError(res, 'Authentication token missing', 401);
   }
 
-  return sendError(res, 'Authentication token missing or invalid', 401);
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    // If Supabase credentials are missing and mock auth is not enabled, fail safely
+    if (config.nodeEnv === 'production' || !config.allowDevMockAuth) {
+      logger.error('[AUTH] Supabase client is not configured in production environment.');
+      return sendError(res, 'Authentication service currently unavailable.', 503);
+    }
+    // Development fallback
+    req.user = MOCK_PROFILES['mock-student-id'];
+    return next();
+  }
+
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+
+    if (authErr || !user) {
+      logger.warn(`[AUTH] Invalid token: ${authErr?.message || 'User not found'}`);
+      return sendError(res, 'Invalid or expired authentication session', 401);
+    }
+
+    // Fetch verified profile from database to determine true role (never trust client)
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, role, department_id, is_active, student_id, staff_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileErr) {
+      logger.error(`[AUTH] Database error fetching user profile: ${profileErr.message}`);
+      return sendError(res, 'Error verifying account permissions', 500);
+    }
+
+    // Require an existing, valid database profile with a permitted role (Fail Closed)
+    if (!profile) {
+      logger.warn(`[AUTH] Profile missing for user ${user.id}. Access denied.`);
+      return sendError(res, 'User profile not found. Please complete registration or contact administrator.', 403);
+    }
+
+    if (profile.is_active !== true) {
+      logger.warn(`[AUTH] Inactive account access attempt: ${user.id}`);
+      return sendError(res, 'Your account is currently inactive. Please contact the administrator.', 403);
+    }
+
+    const PERMITTED_ROLES = ['student', 'staff', 'admin'];
+    if (!profile.role || !PERMITTED_ROLES.includes(profile.role)) {
+      logger.error(`[AUTH] User ${user.id} has invalid/unrecognized database role: "${profile.role}". Failing closed.`);
+      return sendError(res, 'Invalid account role or authorization configuration.', 403);
+    }
+
+    // STRICT: Never use user.user_metadata.role as an authorization fallback. Role is strictly from database profile.
+    const assignedRole = profile.role;
+
+    req.user = {
+      id: user.id,
+      email: profile.email || user.email,
+      role: assignedRole,
+      full_name: profile.full_name || profile.email?.split('@')[0] || 'User',
+      department_id: profile.department_id || null,
+      student_id: profile.student_id || null,
+      staff_id: profile.staff_id || null,
+      is_active: profile.is_active,
+    };
+
+    return next();
+  } catch (err) {
+    logger.error(`[AUTH] Unexpected verification exception: ${err.message}`);
+    return sendError(res, 'Authentication verification failed', 401);
+  }
 };
 
 /**
  * Role-Based Access Guard Middleware
+ * Enforces Student, Staff, and Admin permissions on the server
  */
 const requireRole = (allowedRoles = []) => {
   return (req, res, next) => {
@@ -118,7 +184,11 @@ const requireRole = (allowedRoles = []) => {
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      return sendError(res, `Forbidden: Requires one of [${allowedRoles.join(', ')}] role`, 403);
+      return sendError(
+        res,
+        `Forbidden: Access requires one of [${allowedRoles.join(', ')}] permissions. Current role: ${req.user.role}`,
+        403
+      );
     }
 
     next();

@@ -1,98 +1,97 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   FileText,
   Clock,
   CheckCircle2,
   Coins,
-  Sparkles,
-  AlertCircle,
   MapPin,
   Award,
   ChevronRight,
-  TrendingUp,
-  Filter,
+  Gift,
+  Target,
+  Trophy,
   Plus,
-  Compass,
-  User,
-  Shield,
+  ShieldCheck,
+  Map,
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import MetricCard from '../../components/dashboard/MetricCard';
-import QuickActionCard from '../../components/dashboard/QuickActionCard';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
-import Modal from '../../components/common/Modal';
-import { MOCK_STUDENT_DATA } from '../../constants/mockData';
 import { useAuth } from '../../context/AuthContext';
-
-import { useNavigate, Link } from 'react-router-dom';
 import complaintApi from '../../services/complaintApi';
+import { getWallet, getTransactions } from '../../services/gamificationApi';
+import { calculateLevelInfo } from '../../config/rewardRules';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { user, profile, wallet } = useAuth();
-  const [modalInfo, setModalInfo] = useState({
-    isOpen: false,
-    title: '',
-    description: '',
-    content: '',
-  });
+  const { user, profile } = useAuth();
 
-  // Complaint mock dataset preserved for fallback
-  const { metrics } = MOCK_STUDENT_DATA;
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [complaintStats, setComplaintStats] = useState({
-    total: metrics.myComplaints,
-    pending: metrics.pendingComplaints,
-    resolved: metrics.resolvedComplaints,
+    total: 0,
+    pending: 0,
+    resolved: 0,
   });
 
+  const [walletData, setWalletData] = useState(null);
+  const [recentLedger, setRecentLedger] = useState([]);
+  const [loadingWallet, setLoadingWallet] = useState(true);
+
   useEffect(() => {
-    const fetchLiveComplaints = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const res = await complaintApi.getMyComplaints();
-        if (res.data && res.data.length > 0) {
-          setRecentComplaints(res.data.slice(0, 5));
-          const total = res.data.length;
-          const pending = res.data.filter((c) =>
+        const [complaintsRes, walletRes, ledgerRes] = await Promise.allSettled([
+          complaintApi.getMyComplaints(),
+          getWallet(),
+          getTransactions({ limit: 4, page: 1 }),
+        ]);
+
+        if (complaintsRes.status === 'fulfilled' && complaintsRes.value) {
+          const raw = complaintsRes.value;
+          const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+          setRecentComplaints(data.slice(0, 5));
+          const total = data.length;
+          const pending = data.filter((c) =>
             ['submitted', 'under_review', 'assigned', 'in_progress'].includes(c.status)
           ).length;
-          const resolved = res.data.filter((c) =>
+          const resolved = data.filter((c) =>
             ['resolved', 'verified'].includes(c.status)
           ).length;
           setComplaintStats({ total, pending, resolved });
-        } else {
-          setRecentComplaints(MOCK_STUDENT_DATA.recentComplaints);
         }
-      } catch {
-        setRecentComplaints(MOCK_STUDENT_DATA.recentComplaints);
+
+        if (walletRes.status === 'fulfilled' && walletRes.value) {
+          setWalletData(walletRes.value);
+        }
+
+        if (ledgerRes.status === 'fulfilled' && ledgerRes.value?.data) {
+          setRecentLedger(ledgerRes.value.data);
+        }
+      } catch (err) {
+        console.warn('Dashboard data fetch note:', err);
+      } finally {
+        setLoadingWallet(false);
       }
     };
-    fetchLiveComplaints();
+
+    fetchDashboardData();
   }, []);
 
   const displayName = profile?.full_name || profile?.name || user?.email?.split('@')[0] || 'Student';
-  const realCoinBalance = wallet?.balance ?? 0;
-
-  const handleActionClick = (title, phase, description) => {
-    setModalInfo({
-      isOpen: true,
-      title: `${title} (${phase})`,
-      description: 'Phase Roadmap Preview',
-      content: description,
-    });
-  };
+  const levelInfo = calculateLevelInfo(walletData?.xp || 0);
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Page Header with real profile data */}
+    <div className="space-y-5 animate-fadeIn max-w-7xl mx-auto">
+      {/* Page Header */}
       <PageHeader
         title={`Welcome back, ${displayName}`}
-        subtitle={`Student Portal • ${profile?.email || user?.email || 'student@campus.edu'} • ${profile?.department?.name || 'Computer Science and Engineering'}`}
+        subtitle={`Student Portal • ${profile?.department?.name || 'Computer Science and Engineering'}`}
         badge={
-          <Badge variant="gold" size="sm" withDot>
-            Phase 3 Lifecycle Active
+          <Badge variant="success" size="sm" withDot>
+            Active Contributor
           </Badge>
         }
         actions={
@@ -100,7 +99,7 @@ const StudentDashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<FileText size={16} />}
+              leftIcon={<FileText size={14} />}
               onClick={() => navigate('/student/complaints')}
             >
               My Complaints
@@ -108,243 +107,267 @@ const StudentDashboard = () => {
             <Button
               variant="primary"
               size="sm"
-              leftIcon={<Plus size={16} />}
+              leftIcon={<Plus size={14} />}
               onClick={() => navigate('/student/complaints/new')}
             >
-              Report Issue
+              Report Defect
             </Button>
           </div>
         }
       />
 
-      {/* ========================================================
-          1. REQUIRED METRICS CARDS:
-          - My Complaints
-          - Pending Complaints
-          - Resolved Complaints
-          - CampusCoins (Live from Wallets table)
-          - Impact Score
-          ======================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* My Complaints */}
+      {/* PROMINENT CAMPUSCOINS HERO CARD */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-white via-white to-[#EAF6EE] border border-[#CBE7D4] p-4 sm:p-6 shadow-sm">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#168451]/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+          {/* Left Column: Balance & Civic Standing */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4] shadow-xs">
+                <Coins className="w-5 h-5" />
+              </span>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#168451]">
+                  CampusCoin Wallet & Ledger
+                </span>
+                <h2 className="text-[11px] text-[#647168]">Verified Civic Token Economy</h2>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-baseline gap-2.5">
+              <span className="text-3xl sm:text-4xl font-black text-[#17211B] tracking-tight">
+                {loadingWallet ? '...' : (walletData?.balance || 0).toLocaleString()}
+              </span>
+              <span className="text-[#168451] font-bold text-lg sm:text-xl">CampusCoins</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4] font-semibold">
+                +{walletData?.lifetime_earned || 0} earned
+              </span>
+            </div>
+
+            {/* Level & Impact Score Badges */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#E1E9E2] text-[#17211B] text-[11px] font-semibold shadow-xs">
+                <Award className="w-3.5 h-3.5 text-[#168451]" />
+                <span>Level {levelInfo.currentLevel}: {levelInfo.currentLevelName}</span>
+                <span className="text-[#647168] font-mono">({levelInfo.currentXP} XP)</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#E1E9E2] text-[#17211B] text-[11px] font-semibold shadow-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#1E6091]" />
+                <span>Impact: {walletData?.impact_score || 0} pts</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Direct Quick-Access Buttons */}
+          <div className="grid grid-cols-2 gap-2 pt-1 lg:w-96 shrink-0">
+            <Link
+              to="/student/wallet"
+              className="p-3 rounded-xl bg-white hover:bg-[#F7FAF7] border border-[#E1E9E2] text-[#17211B] flex items-center justify-between text-xs font-bold transition-all shadow-xs group hover:border-[#168451]"
+            >
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-[#B7791F]" />
+                <span>Wallet</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#647168] group-hover:text-[#168451]" />
+            </Link>
+
+            <Link
+              to="/student/rewards"
+              className="p-3 rounded-xl bg-[#168451] hover:bg-[#116B42] text-white flex items-center justify-between text-xs font-bold transition-all shadow-xs group"
+            >
+              <div className="flex items-center gap-2">
+                <Gift className="w-4 h-4" />
+                <span>Store</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-white" />
+            </Link>
+
+            <Link
+              to="/student/map"
+              className="p-3 rounded-xl bg-white hover:bg-[#F7FAF7] border border-[#E1E9E2] text-[#17211B] flex items-center justify-between text-xs font-bold transition-all shadow-xs group hover:border-[#168451]"
+            >
+              <div className="flex items-center gap-2">
+                <Map className="w-4 h-4 text-[#168451]" />
+                <span>Campus Map</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#647168] group-hover:text-[#168451]" />
+            </Link>
+
+            <Link
+              to="/student/missions"
+              className="p-3 rounded-xl bg-white hover:bg-[#F7FAF7] border border-[#E1E9E2] text-[#17211B] flex items-center justify-between text-xs font-bold transition-all shadow-xs group hover:border-[#168451]"
+            >
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-[#168451]" />
+                <span>Missions</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-[#647168] group-hover:text-[#168451]" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Complaint Metrics Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <MetricCard
-          title="My Complaints"
-          value={metrics.myComplaints}
-          subtitle="Total issues submitted"
+          title="Total Reports"
+          value={complaintStats.total}
+          subtitle="Submitted tickets"
           icon={FileText}
           color="indigo"
         />
-
-        {/* Pending Complaints */}
         <MetricCard
-          title="Pending"
-          value={metrics.pendingComplaints}
-          subtitle="Under department review"
+          title="In Progress"
+          value={complaintStats.pending}
+          subtitle="Technician on-site"
           icon={Clock}
           color="amber"
         />
-
-        {/* Resolved Complaints */}
         <MetricCard
           title="Resolved"
-          value={metrics.resolvedComplaints}
-          subtitle="Verified fixes"
+          value={complaintStats.resolved}
+          subtitle="Verified by student"
           icon={CheckCircle2}
           color="emerald"
         />
-
-        {/* CampusCoins (Live from real Supabase Wallet balance) */}
         <MetricCard
-          title="CampusCoins"
-          value={realCoinBalance}
-          badgeText="CC"
-          subtitle="Real Supabase wallet balance"
-          icon={Coins}
-          color="amber"
-        />
-
-        {/* Impact Score */}
-        <MetricCard
-          title="Impact Score"
-          value={`${metrics.impactScore}%`}
-          subtitle="Civic contribution score"
-          icon={TrendingUp}
+          title="Campus Rank"
+          value={walletData?.impact_score ? `#1` : `#--`}
+          subtitle="Leaderboard"
+          icon={Trophy}
           color="sky"
         />
       </div>
 
-      {/* ========================================================
-          2. REQUIRED QUICK ACTIONS:
-          - Report an Issue
-          - View Complaints
-          - Campus Map
-          - Rewards
-          ======================================================== */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <Sparkles size={16} className="text-coin-400" />
-            Quick Actions
-          </h3>
-          <span className="text-xs text-slate-400">
-            Interactive shortcuts for student workflows
-          </span>
+      {/* Main Grid: Recent Activity & Ledger */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Recent Complaints */}
+        <div className="lg:col-span-2">
+          <Card className="border-[#E1E9E2]">
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recent Maintenance Complaints</CardTitle>
+                <p className="text-xs text-[#647168]">
+                  Track progress and verify completed repairs to earn coins
+                </p>
+              </div>
+              <Link
+                to="/student/complaints"
+                className="text-xs font-semibold text-[#168451] hover:text-[#116B42] inline-flex items-center gap-1"
+              >
+                <span>View All</span>
+                <ChevronRight size={14} />
+              </Link>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              <div className="divide-y divide-[#E1E9E2]">
+                {recentComplaints.length === 0 ? (
+                  <div className="p-8 text-center text-[#647168] text-xs">
+                    No complaints submitted yet.{' '}
+                    <Link to="/student/complaints/new" className="text-[#168451] font-semibold underline">
+                      Report an issue
+                    </Link>
+                  </div>
+                ) : (
+                  recentComplaints.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#F7FAF7] transition-colors cursor-pointer"
+                      onClick={() => navigate(`/student/complaints/${item.id}`)}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-[#647168]">
+                            {item.tracking_code || item.id.substring(0, 8)}
+                          </span>
+                          <Badge variant={item.statusVariant || 'default'} size="sm">
+                            {item.status}
+                          </Badge>
+                          <span className="text-xs text-[#647168] font-medium">
+                            &bull; {item.category}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-semibold text-[#17211B]">{item.title}</h4>
+                        <div className="flex items-center gap-4 text-xs text-[#647168]">
+                          <span className="flex items-center gap-1">
+                            <MapPin size={12} className="text-[#647168]" />
+                            {item.building?.name || item.general_location || 'Campus Location'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E1E9E2]">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/student/complaints/${item.id}`);
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Action 1: Report an Issue */}
-          <QuickActionCard
-            title="Report an Issue"
-            description="Submit an infrastructure defect with photos and location details."
-            icon={AlertCircle}
-            onClick={() => navigate('/student/complaints/new')}
-          />
+        {/* Right 1 Col: Recent Ledger Feed */}
+        <div>
+          <Card className="border-[#E1E9E2]">
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recent Coin Activity</CardTitle>
+                <p className="text-xs text-[#647168]">Transactions & verified contributions</p>
+              </div>
+              <Link
+                to="/student/wallet/transactions"
+                className="text-xs font-semibold text-[#168451] hover:text-[#116B42] inline-flex items-center gap-1"
+              >
+                <span>Ledger</span>
+                <ChevronRight size={14} />
+              </Link>
+            </CardHeader>
 
-          {/* Action 2: View Complaints */}
-          <QuickActionCard
-            title="View Complaints"
-            description="Inspect the live status, comments, and technician notes of your tickets."
-            icon={FileText}
-            onClick={() => navigate('/student/complaints')}
-          />
-
-          {/* Action 3: Campus Map */}
-          <QuickActionCard
-            title="Campus Map"
-            description="Turn-by-turn navigation between classrooms, labs, and reported incidents."
-            icon={Compass}
-            badge="Phase 4"
-            onClick={() =>
-              handleActionClick(
-                'Campus Map & Navigation',
-                'Phase 4',
-                'OpenStreetMap / MapLibre indoor and outdoor route finding with Dijkstra/A* path algorithms will be released in Phase 4.'
-              )
-            }
-          />
-
-          {/* Action 4: Rewards */}
-          <QuickActionCard
-            title="Rewards Shop"
-            description="Redeem your earned CampusCoins for campus canteen discounts & merch."
-            icon={Award}
-            badge="Phase 5"
-            onClick={() =>
-              handleActionClick(
-                'Rewards & Bounties',
-                'Phase 5',
-                'The decentralized coin ledger, reward redemption, and bounty contributions will launch in Phase 5.'
-              )
-            }
-          />
+            <CardContent className="p-0">
+              <div className="divide-y divide-[#E1E9E2]">
+                {recentLedger.length === 0 ? (
+                  <div className="p-6 text-center text-[#647168] text-xs">
+                    No transactions yet. Verify reports to earn coins!
+                  </div>
+                ) : (
+                  recentLedger.map((tx) => {
+                    const isPositive = tx.amount > 0;
+                    return (
+                      <div key={tx.id} className="p-3.5 hover:bg-[#F7FAF7] transition-colors flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-semibold text-[#17211B] line-clamp-1">
+                            {tx.description}
+                          </p>
+                          <p className="text-[10px] text-[#647168] font-mono capitalize">
+                            {tx.event_type}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-bold shrink-0 ${isPositive ? 'text-[#168451]' : 'text-[#C43D3D]'}`}>
+                          {isPositive ? `+${tx.amount}` : tx.amount} CC
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-
-      {/* ========================================================
-          3. RECENT ACTIVITY & COMPLAINTS PREVIEW
-          ======================================================== */}
-      <Card className="border-slate-800/80">
-        <CardHeader className="flex-row items-center justify-between">
-          <div>
-            <CardTitle>Recent Complaints & Updates</CardTitle>
-            <p className="text-xs text-slate-400">
-              Your latest submitted tickets and their current resolution status
-            </p>
-          </div>
-          <Link
-            to="/student/complaints"
-            className="text-xs font-semibold text-campus-400 hover:text-campus-300 inline-flex items-center gap-1"
-          >
-            <span>View All</span>
-            <ChevronRight size={14} />
-          </Link>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <div className="divide-y divide-slate-800/60">
-            {recentComplaints.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-800/30 transition-colors cursor-pointer"
-                onClick={() => navigate(`/student/complaints/${item.id}`)}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-mono font-bold text-slate-400">
-                      {item.tracking_code || item.id}
-                    </span>
-                    <Badge variant={item.statusVariant || 'default'} size="sm">
-                      {item.status}
-                    </Badge>
-                    <span className="text-xs text-slate-500 font-medium">
-                      &bull; {item.category}
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-semibold text-slate-200">
-                    {item.title}
-                  </h4>
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={12} className="text-slate-500" />
-                      {item.location || item.general_location || 'Campus Location'}
-                    </span>
-                    {item.assignedDept && <span>Assigned: {item.assignedDept}</span>}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-                  <div className="text-right">
-                    <span className="text-[11px] text-slate-500 block">
-                      {item.date || (item.created_at ? new Date(item.created_at).toLocaleDateString() : '')}
-                    </span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/student/complaints/${item.id}`);
-                    }}
-                  >
-                    View
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Phase Roadmap Modal */}
-      <Modal
-        isOpen={modalInfo.isOpen}
-        onClose={() => setModalInfo({ ...modalInfo, isOpen: false })}
-        title={modalInfo.title}
-        description={modalInfo.description}
-        footer={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setModalInfo({ ...modalInfo, isOpen: false })}
-          >
-            Understood
-          </Button>
-        }
-      >
-        <div className="space-y-4 text-sm text-slate-300">
-          <p className="leading-relaxed">{modalInfo.content}</p>
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5 text-xs text-slate-400">
-            <span className="font-semibold text-slate-200 block">
-              Phase 2 Status:
-            </span>
-            <p>
-              Supabase Authentication, Sessions, Wallets, and Database schemas are fully configured.
-              Complaint CRUD workflow will be introduced in Phase 3.
-            </p>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

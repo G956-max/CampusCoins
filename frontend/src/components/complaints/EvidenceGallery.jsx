@@ -9,7 +9,7 @@ const EvidenceGallery = ({ evidence = [], className }) => {
 
   if (!evidence || evidence.length === 0) {
     return (
-      <div className="p-6 text-center text-xs text-slate-500 rounded-xl bg-slate-900/40 border border-slate-800/80">
+      <div className="p-6 text-center text-xs text-[#647168] rounded-xl bg-[#F7FAF7] border border-[#E1E9E2]">
         No photo or document evidence attached to this ticket.
       </div>
     );
@@ -32,40 +32,40 @@ const EvidenceGallery = ({ evidence = [], className }) => {
           return (
             <div
               key={item.id || idx}
-              className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between gap-3 group hover:border-slate-700 transition-all"
+              className="p-3 rounded-xl bg-white border border-[#E1E9E2] flex flex-col justify-between gap-3 group hover:border-[#168451]/40 shadow-xs transition-all"
             >
               {/* Preview Thumbnail */}
               {isImage ? (
                 <div
                   onClick={() => setSelectedImage(item.file_url)}
-                  className="relative h-32 w-full rounded-lg overflow-hidden bg-slate-950 cursor-pointer group/thumb"
+                  className="relative h-32 w-full rounded-lg overflow-hidden bg-[#F7FAF7] border border-[#E1E9E2] cursor-pointer group/thumb"
                 >
                   <img
                     src={item.file_url}
                     alt="Complaint Evidence"
                     className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="p-2 rounded-full bg-slate-900/80 text-white">
+                  <div className="absolute inset-0 bg-[#17211B]/20 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                    <span className="p-2 rounded-full bg-white text-[#17211B] shadow-md">
                       <Eye size={18} />
                     </span>
                   </div>
                 </div>
               ) : isVideo ? (
-                <div className="h-32 w-full rounded-lg overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-2">
-                  <Video size={32} className="text-campus-400" />
-                  <span className="text-[11px]">Video Evidence</span>
+                <div className="h-32 w-full rounded-lg overflow-hidden bg-[#F7FAF7] border border-[#E1E9E2] flex flex-col items-center justify-center text-[#647168] gap-2">
+                  <Video size={32} className="text-[#168451]" />
+                  <span className="text-[11px] font-medium">Video Evidence</span>
                 </div>
               ) : (
-                <div className="h-32 w-full rounded-lg overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-2">
-                  <FileText size={32} className="text-sky-400" />
-                  <span className="text-[11px]">PDF Document</span>
+                <div className="h-32 w-full rounded-lg overflow-hidden bg-[#F7FAF7] border border-[#E1E9E2] flex flex-col items-center justify-center text-[#647168] gap-2">
+                  <FileText size={32} className="text-[#168451]" />
+                  <span className="text-[11px] font-medium">PDF Document</span>
                 </div>
               )}
 
               {/* Action row */}
               <div className="flex items-center justify-between pt-1 text-xs">
-                <span className="text-slate-400 font-mono text-[11px] truncate max-w-[150px]">
+                <span className="text-[#647168] font-mono text-[11px] truncate max-w-[150px]">
                   {item.file_type || 'Attachment'}
                 </span>
 
@@ -74,7 +74,7 @@ const EvidenceGallery = ({ evidence = [], className }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="inline-flex items-center gap-1 text-campus-400 hover:text-campus-300 font-semibold"
+                  className="inline-flex items-center gap-1 text-[#168451] hover:text-[#116B42] font-semibold"
                 >
                   <Download size={13} />
                   <span>Open</span>
@@ -98,11 +98,11 @@ const EvidenceGallery = ({ evidence = [], className }) => {
         }
       >
         {selectedImage && (
-          <div className="max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-slate-950 p-2">
+          <div className="max-h-[70vh] flex items-center justify-center overflow-hidden rounded-xl bg-[#F7FAF7] border border-[#E1E9E2] p-2">
             <img
               src={selectedImage}
-              alt="Full preview"
-              className="max-h-[70vh] w-auto max-w-full rounded-lg object-contain"
+              alt="Full Preview"
+              className="max-h-[65vh] w-auto object-contain rounded-lg shadow-sm"
             />
           </div>
         )}

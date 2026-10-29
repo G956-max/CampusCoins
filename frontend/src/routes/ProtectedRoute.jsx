@@ -13,9 +13,9 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#080c14] gap-3">
-        <LoadingSpinner size="lg" color="text-campus-500" />
-        <p className="text-xs text-slate-400 font-medium">Verifying campus credentials...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F7FAF7] gap-3">
+        <LoadingSpinner size="lg" color="text-[#168451]" />
+        <p className="text-xs text-[#647168] font-medium">Verifying campus credentials...</p>
       </div>
     );
   }

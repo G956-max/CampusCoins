@@ -18,11 +18,10 @@ import {
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { Card } from '../../components/common/Card';
-import Badge from '../../components/common/Badge';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../constants/roles';
 
-// Zod validation schema for registration (Phase 2 strict requirements)
+// Zod validation schema for registration
 const registerSchema = z
   .object({
     fullName: z
@@ -102,42 +101,42 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative bg-[#F7FAF7]">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#168451]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="w-full max-w-lg space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2 group mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-campus-500 to-coin-500 flex items-center justify-center text-slate-950 shadow-md">
+          <Link to="/" className="inline-flex items-center gap-2.5 group mb-2">
+            <div className="w-11 h-11 rounded-2xl bg-[#168451] flex items-center justify-center text-white shadow-sm">
               <Coins size={22} className="stroke-[2.5]" />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">
-              Campus<span className="text-campus-400">Coins</span>
+            <span className="text-2xl font-black text-[#17211B] tracking-tight">
+              Campus<span className="text-[#168451]">Coins</span>
             </span>
           </Link>
-          <h2 className="text-2xl font-bold tracking-tight text-white">
+          <h2 className="text-2xl font-bold tracking-tight text-[#17211B]">
             Create Your Account
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#647168]">
             Join the campus civic platform and start earning CampusCoins
           </p>
         </div>
 
         {/* Email Confirmation Notice Screen */}
         {emailConfirmationRequired ? (
-          <Card className="p-8 border-slate-800/90 bg-slate-900/80 text-center space-y-4 animate-fadeIn">
-            <div className="w-14 h-14 rounded-2xl bg-campus-500/20 text-campus-400 border border-campus-500/30 flex items-center justify-center mx-auto shadow-inner">
+          <Card className="p-8 border-[#E1E9E2] bg-white text-center space-y-4 shadow-sm animate-fadeIn">
+            <div className="w-14 h-14 rounded-2xl bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4] flex items-center justify-center mx-auto shadow-xs">
               <CheckCircle2 size={32} />
             </div>
-            <h3 className="text-lg font-bold text-white">
+            <h3 className="text-lg font-bold text-[#17211B]">
               Registration successful!
             </h3>
-            <p className="text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+            <p className="text-sm text-[#647168] leading-relaxed max-w-md mx-auto">
               Please verify your college email before logging in.
             </p>
-            <p className="text-xs text-slate-400 font-mono bg-slate-950 p-3 rounded-xl border border-slate-800">
-              Verification sent to: <span className="text-campus-300 font-semibold">{registeredEmail}</span>
+            <p className="text-xs text-[#17211B] font-mono bg-[#F7FAF7] p-3 rounded-xl border border-[#E1E9E2]">
+              Verification sent to: <span className="text-[#168451] font-semibold">{registeredEmail}</span>
             </p>
             <div className="pt-2">
               <Link to="/login">
@@ -149,11 +148,11 @@ const RegisterPage = () => {
           </Card>
         ) : (
           /* Register Card */
-          <Card className="p-6 sm:p-8 border-slate-800/90 bg-slate-900/70">
+          <Card className="p-6 sm:p-8 border-[#E1E9E2] bg-white shadow-sm">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {authError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 animate-fadeIn">
-                  <AlertCircle size={16} className="shrink-0 text-rose-400" />
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-fadeIn">
+                  <AlertCircle size={16} className="shrink-0 text-rose-600" />
                   <span>{authError}</span>
                 </div>
               )}
@@ -181,15 +180,15 @@ const RegisterPage = () => {
 
               {/* Role Selection (Student vs Staff Only) */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase">
+                <label className="block text-xs font-bold tracking-wider text-[#17211B] uppercase">
                   Account Role
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
                       selectedRole === ROLES.STUDENT
-                        ? 'bg-campus-500/10 border-campus-500/50 text-slate-100 ring-1 ring-campus-500/30'
-                        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-[#EAF6EE] border-[#168451] text-[#17211B] shadow-xs'
+                        : 'bg-white border-[#E1E9E2] text-[#647168] hover:border-[#168451]/40'
                     }`}
                   >
                     <input
@@ -202,21 +201,21 @@ const RegisterPage = () => {
                       size={20}
                       className={
                         selectedRole === ROLES.STUDENT
-                          ? 'text-campus-400'
-                          : 'text-slate-500'
+                          ? 'text-[#168451]'
+                          : 'text-[#647168]'
                       }
                     />
                     <div className="text-left">
-                      <p className="text-xs font-bold text-slate-200">Student</p>
-                      <p className="text-[10px] text-slate-400">Report & Earn</p>
+                      <p className="text-xs font-bold text-[#17211B]">Student</p>
+                      <p className="text-[10px] text-[#647168]">Report & Earn</p>
                     </div>
                   </label>
 
                   <label
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
                       selectedRole === ROLES.STAFF
-                        ? 'bg-sky-500/10 border-sky-500/50 text-slate-100 ring-1 ring-sky-500/30'
-                        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-sky-50 border-sky-600 text-sky-900 shadow-xs'
+                        : 'bg-white border-[#E1E9E2] text-[#647168] hover:border-sky-300'
                     }`}
                   >
                     <input
@@ -229,33 +228,33 @@ const RegisterPage = () => {
                       size={20}
                       className={
                         selectedRole === ROLES.STAFF
-                          ? 'text-sky-400'
-                          : 'text-slate-500'
+                          ? 'text-sky-600'
+                          : 'text-[#647168]'
                       }
                     />
                     <div className="text-left">
-                      <p className="text-xs font-bold text-slate-200">Staff</p>
-                      <p className="text-[10px] text-slate-400">Department Ops</p>
+                      <p className="text-xs font-bold text-[#17211B]">Staff</p>
+                      <p className="text-[10px] text-[#647168]">Department Ops</p>
                     </div>
                   </label>
                 </div>
                 {errors.role && (
-                  <p className="text-xs text-rose-400 font-medium">
+                  <p className="text-xs text-rose-600 font-medium">
                     {errors.role.message}
                   </p>
                 )}
               </div>
 
-              {/* Admin Registration Prohibition Notice */}
-              <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
-                <Info size={14} className="text-slate-500 mt-0.5 shrink-0" />
+              {/* Admin Registration Notice */}
+              <div className="p-3 rounded-xl bg-[#F7FAF7] border border-[#E1E9E2] text-[11px] text-[#647168] flex items-start gap-2">
+                <Info size={14} className="text-[#168451] mt-0.5 shrink-0" />
                 <span>
                   Admin accounts must not be publicly registered. Administrator access is restricted
                   and provisioned strictly via Supabase / Campus Administration.
                 </span>
               </div>
 
-              {/* Password (Minimum 8 chars) */}
+              {/* Password */}
               <Input
                 label="Password"
                 type="password"
@@ -280,16 +279,16 @@ const RegisterPage = () => {
                 <label className="flex items-start gap-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="mt-0.5 w-4 h-4 rounded bg-slate-800 border-slate-700 text-campus-500 focus:ring-campus-500/30"
+                    className="mt-0.5 w-4 h-4 rounded bg-white border-[#E1E9E2] text-[#168451] focus:ring-[#168451]/30"
                     {...register('agreeTerms')}
                   />
-                  <span className="text-xs text-slate-400 leading-snug">
+                  <span className="text-xs text-[#647168] leading-snug">
                     I agree to report genuine campus issues and adhere to the{' '}
-                    <span className="text-campus-400 hover:underline">Honor Code</span>.
+                    <span className="text-[#168451] font-semibold hover:underline">Honor Code</span>.
                   </span>
                 </label>
                 {errors.agreeTerms && (
-                  <p className="text-xs text-rose-400 font-medium mt-1">
+                  <p className="text-xs text-rose-600 font-medium mt-1">
                     {errors.agreeTerms.message}
                   </p>
                 )}
@@ -309,12 +308,12 @@ const RegisterPage = () => {
             </form>
 
             {/* Switch to Login */}
-            <div className="mt-6 pt-6 border-t border-slate-800 text-center">
-              <p className="text-xs text-slate-400">
+            <div className="mt-6 pt-6 border-t border-[#E1E9E2] text-center">
+              <p className="text-xs text-[#647168]">
                 Already have an account?{' '}
                 <Link
                   to="/login"
-                  className="text-campus-400 hover:text-campus-300 font-semibold hover:underline"
+                  className="text-[#168451] hover:text-[#116B42] font-bold hover:underline"
                 >
                   Sign in
                 </Link>

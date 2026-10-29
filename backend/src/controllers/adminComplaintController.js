@@ -154,6 +154,71 @@ const getStaffList = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/admin/complaints/:id/verify - Admin verifies valid complaint and triggers rewards
+ */
+const verifyComplaint = async (req, res, next) => {
+  try {
+    const { is_useful_evidence, is_high_impact } = req.body || {};
+    const result = await complaintService.verifyComplaintAdmin(
+      req.params.id,
+      {
+        isUsefulEvidence: Boolean(is_useful_evidence),
+        isHighImpact: Boolean(is_high_impact),
+      },
+      req.user
+    );
+
+    return sendSuccess(res, 'Complaint verified and rewards evaluated successfully', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/admin/complaints/:id/spam - Admin marks complaint as spam
+ */
+const markSpam = async (req, res, next) => {
+  try {
+    const complaint = await complaintService.markSpam(req.params.id, req.user);
+    return sendSuccess(res, 'Complaint marked as spam and penalty applied', complaint);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/admin/complaints/:id/fake - Admin marks complaint as fake report
+ */
+const markFake = async (req, res, next) => {
+  try {
+    const complaint = await complaintService.markFake(req.params.id, req.user);
+    return sendSuccess(res, 'Complaint marked as fake report and penalty applied', complaint);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/admin/complaints/:id/link-duplicate - Link complaint as duplicate of another ticket
+ */
+const linkDuplicateComplaint = async (req, res, next) => {
+  try {
+    const { duplicate_of_id } = req.body;
+    if (!duplicate_of_id) {
+      return sendError(res, 'duplicate_of_id is required', 400);
+    }
+    const { linkDuplicate } = require('../services/duplicateDetectionService');
+    const result = await linkDuplicate(req.params.id, duplicate_of_id, req.user);
+    return sendSuccess(res, 'Complaint marked as duplicate and linked', result);
+  } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, message: err.message });
+    }
+    next(err);
+  }
+};
+
 module.exports = {
   getAllComplaints,
   getAdminComplaintDetails,
@@ -162,4 +227,8 @@ module.exports = {
   assignStaff,
   updatePriority,
   getStaffList,
+  verifyComplaint,
+  markSpam,
+  markFake,
+  linkDuplicateComplaint,
 };

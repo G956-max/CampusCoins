@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,8 +12,9 @@ import {
   ArrowLeft,
   Send,
   AlertOctagon,
-  ShieldCheck,
+  Sparkles,
   Info,
+  Layers,
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/common/Card';
@@ -26,17 +27,18 @@ import {
   COMPLAINT_PRIORITIES,
 } from '../../constants/complaints';
 import complaintApi from '../../services/complaintApi';
+import api from '../../services/api';
 
 const formSchema = z.object({
   title: z
     .string()
-    .min(2, 'Title must be at least 2 characters')
+    .min(5, 'Title must be at least 5 characters')
     .max(150, 'Title cannot exceed 150 characters'),
   category: z.string().min(1, 'Please select a valid category'),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   description: z
     .string()
-    .min(10, 'Please describe the issue in at least 10 characters')
+    .min(20, 'Please describe the issue in at least 20 characters')
     .max(5000, 'Description cannot exceed 5000 characters'),
   additional_notes: z.string().max(2000).optional(),
 });
@@ -57,10 +59,16 @@ const ReportIssuePage = () => {
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // AI & Duplicate suggestions state
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(formSchema),
@@ -73,20 +81,83 @@ const ReportIssuePage = () => {
     },
   });
 
+  const titleVal = watch('title');
+  const descVal = watch('description');
   const selectedPriority = watch('priority');
+
+  // Debounced duplicate detection
+  useEffect(() => {
+    if (!titleVal || titleVal.length < 8) {
+      setDuplicateWarning(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.post('/complaints/check-duplicate', {
+          title: titleVal,
+          description: descVal || '',
+          category: watch('category') || undefined,
+        });
+        if (res.data?.success && res.data.data?.hasPossibleDuplicates) {
+          setDuplicateWarning(res.data.data);
+        } else {
+          setDuplicateWarning(null);
+        }
+      } catch {
+        // Non-blocking duplicate check
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [titleVal, descVal, watch]);
+
+  // AI Smart Suggestion
+  const handleAiSuggest = async () => {
+    if (!titleVal && !descVal) return;
+    setIsClassifying(true);
+    setAiSuggestion(null);
+
+    try {
+      const res = await api.post('/ai/classify', {
+        text: `${titleVal} ${descVal}`.trim(),
+      });
+      if (res.data?.success) {
+        const { category, priority, confidence, explanation } = res.data.data;
+        setAiSuggestion({ category, priority, confidence, explanation });
+        if (category) setValue('category', category);
+        if (priority) setValue('priority', priority);
+      }
+    } catch {
+      // Rule-based fallback if offline
+      const t = (titleVal + ' ' + descVal).toLowerCase();
+      let cat = 'Electrical';
+      if (t.includes('water') || t.includes('leak') || t.includes('pipe') || t.includes('tap') || t.includes('sink')) cat = 'Plumbing';
+      else if (t.includes('ac') || t.includes('heat') || t.includes('cooling') || t.includes('temp') || t.includes('air')) cat = 'HVAC';
+      else if (t.includes('wifi') || t.includes('internet') || t.includes('network') || t.includes('lan')) cat = 'Wi-Fi';
+      else if (t.includes('chair') || t.includes('desk') || t.includes('bench') || t.includes('table')) cat = 'Furniture';
+
+      let pri = 'medium';
+      if (t.includes('hazard') || t.includes('sparks') || t.includes('fire') || t.includes('emergency')) pri = 'critical';
+      else if (t.includes('flood') || t.includes('broken') || t.includes('urgent')) pri = 'high';
+
+      setAiSuggestion({ category: cat, priority: pri, confidence: 0.85, explanation: 'Rule-based pattern matching baseline' });
+      setValue('category', cat);
+      setValue('priority', pri);
+    } finally {
+      setIsClassifying(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     setFileError('');
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size limit: max 25MB
     if (file.size > 25 * 1024 * 1024) {
-      setFileError('File size exceeds the 25MB overall threshold.');
+      setFileError('File size exceeds 25 MB limit.');
       return;
     }
-
-    // Specific MIME limits
     if (file.type.startsWith('image/') && file.size > 5 * 1024 * 1024) {
       setFileError('Images must be smaller than 5 MB.');
       return;
@@ -109,7 +180,6 @@ const ReportIssuePage = () => {
     setSubmitError('');
 
     try {
-      // 1. Create Complaint Record
       const complaint = await complaintApi.createComplaint({
         title: data.title,
         description: data.description,
@@ -120,7 +190,6 @@ const ReportIssuePage = () => {
         room_id: roomId || null,
       });
 
-      // 2. Upload Evidence if selected
       if (selectedFile && complaint?.id) {
         try {
           await complaintApi.uploadEvidence(complaint.id, selectedFile);
@@ -144,10 +213,10 @@ const ReportIssuePage = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
       {/* Header */}
       <PageHeader
-        title="Report a Campus Issue"
-        subtitle="Submit defective infrastructure, lab issues, or facilities maintenance requests"
+        title="Report a Campus Defect"
+        subtitle="Submit defective infrastructure, lab maintenance, or facility requests to earn CampusCoins"
         badge={
-          <Badge variant="gold" size="sm" withDot>
+          <Badge variant="success" size="sm" withDot>
             Ticket Intake
           </Badge>
         }
@@ -162,11 +231,11 @@ const ReportIssuePage = () => {
 
       {/* Success Notification */}
       {submitSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-3 animate-fadeIn">
-          <CheckCircle2 size={20} className="text-emerald-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-[#EAF6EE] border border-[#CBE7D4] text-[#168451] text-sm flex items-center gap-3 animate-fadeIn">
+          <CheckCircle2 size={20} className="shrink-0" />
           <div>
             <p className="font-bold">Complaint Submitted Successfully!</p>
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-[#647168]">
               Your ticket has been placed into the administrative triage queue. Redirecting...
             </p>
           </div>
@@ -175,21 +244,66 @@ const ReportIssuePage = () => {
 
       {/* Form Error Banner */}
       {submitError && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5 animate-fadeIn">
-          <AlertTriangle size={18} className="text-rose-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-[#FDF2F2] border border-[#F8D2D2] text-[#C43D3D] text-xs flex items-center gap-2.5 animate-fadeIn">
+          <AlertTriangle size={18} className="shrink-0" />
           <span>{submitError}</span>
+        </div>
+      )}
+
+      {/* Smart Duplicate Advisory Banner */}
+      {duplicateWarning && (
+        <div className="p-4 rounded-xl bg-[#FEF9EE] border border-[#F8E7C5] text-[#17211B] text-xs space-y-1.5 animate-fadeIn">
+          <div className="flex items-center gap-2 font-bold text-[#B7791F]">
+            <Info size={16} />
+            <span>Similar Issue Already Reported On Campus</span>
+          </div>
+          <p className="text-xs text-[#647168] leading-relaxed">
+            A complaint with similar description was previously logged (
+            <span className="font-semibold text-[#17211B]">
+              {duplicateWarning.topMatch?.title || 'Existing ticket'}
+            </span>
+            ). You can still submit this report if it represents a separate incident or recurring defect.
+          </p>
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Section 1: Overview */}
-        <Card className="p-6 sm:p-7 border-slate-800/80">
-          <CardHeader className="p-0 pb-5 border-b border-slate-800/60 mb-5">
-            <CardTitle>1. Issue Overview</CardTitle>
-            <p className="text-xs text-slate-400">
-              Provide a clear title and select the relevant facility category.
-            </p>
+        <Card className="p-6 sm:p-7 border-[#E1E9E2]">
+          <CardHeader className="p-0 pb-4 border-b border-[#E1E9E2] mb-5 flex-row items-center justify-between">
+            <div>
+              <CardTitle>1. Issue Overview</CardTitle>
+              <p className="text-xs text-[#647168]">
+                Provide a clear title and describe the defective equipment or infrastructure.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              leftIcon={<Sparkles size={14} className="text-[#168451]" />}
+              onClick={handleAiSuggest}
+              isLoading={isClassifying}
+              disabled={!titleVal && !descVal}
+            >
+              AI Auto-Classify
+            </Button>
           </CardHeader>
+
+          {/* AI Suggestion Feedback */}
+          {aiSuggestion && (
+            <div className="mb-5 p-3.5 rounded-xl bg-[#EAF6EE] border border-[#CBE7D4] text-xs flex items-center justify-between animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-[#168451]" />
+                <span className="text-[#17211B]">
+                  Suggested: <strong className="text-[#168451]">{aiSuggestion.category}</strong> • Priority: <strong className="capitalize">{aiSuggestion.priority}</strong>
+                </span>
+              </div>
+              <span className="text-[11px] text-[#647168]">
+                {Math.round(aiSuggestion.confidence * 100)}% Confidence
+              </span>
+            </div>
+          )}
 
           <div className="space-y-5">
             {/* Title */}
@@ -202,49 +316,49 @@ const ReportIssuePage = () => {
 
             {/* Category */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase">
+              <label className="block text-xs font-semibold tracking-wide text-[#17211B]">
                 Facility Category
               </label>
               <select
-                className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-campus-500 transition-colors"
+                className="w-full bg-white border border-[#E1E9E2] rounded-xl px-3.5 py-2.5 text-sm text-[#17211B] focus:outline-none focus:border-[#168451] focus:ring-2 focus:ring-[#168451]/20 transition-colors shadow-sm"
                 {...register('category')}
               >
                 <option value="">Select Category</option>
                 {COMPLAINT_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat} className="bg-slate-900">
+                  <option key={cat} value={cat}>
                     {cat}
                   </option>
                 ))}
               </select>
               {errors.category && (
-                <p className="text-xs text-rose-400 font-medium">{errors.category.message}</p>
+                <p className="text-xs text-[#C43D3D] font-medium">{errors.category.message}</p>
               )}
             </div>
 
             {/* Description */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase">
-                Detailed Description
+              <label className="block text-xs font-semibold tracking-wide text-[#17211B]">
+                Detailed Description (Min. 20 chars)
               </label>
               <textarea
                 rows={4}
-                placeholder="Describe the defect, when it began, and any safety hazards..."
-                className="w-full bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-campus-500 transition-colors"
+                placeholder="Describe the defect, when it began, room temperature, sounds, or safety risks..."
+                className="w-full bg-white border border-[#E1E9E2] rounded-xl p-3.5 text-sm text-[#17211B] placeholder-[#647168]/50 focus:outline-none focus:border-[#168451] focus:ring-2 focus:ring-[#168451]/20 transition-colors shadow-sm"
                 {...register('description')}
               />
               {errors.description && (
-                <p className="text-xs text-rose-400 font-medium">{errors.description.message}</p>
+                <p className="text-xs text-[#C43D3D] font-medium">{errors.description.message}</p>
               )}
             </div>
           </div>
         </Card>
 
         {/* Section 2: Location Selection */}
-        <Card className="p-6 sm:p-7 border-slate-800/80">
-          <CardHeader className="p-0 pb-5 border-b border-slate-800/60 mb-5">
-            <CardTitle>2. Campus Location</CardTitle>
-            <p className="text-xs text-slate-400">
-              Pinpoint the building, floor, and room so technicians locate the issue quickly.
+        <Card className="p-6 sm:p-7 border-[#E1E9E2]">
+          <CardHeader className="p-0 pb-4 border-b border-[#E1E9E2] mb-5">
+            <CardTitle>2. Campus Location Hierarchy</CardTitle>
+            <p className="text-xs text-[#647168]">
+              Pinpoint the building, floor, and room so maintenance technicians locate the issue quickly.
             </p>
           </CardHeader>
 
@@ -258,12 +372,12 @@ const ReportIssuePage = () => {
           />
         </Card>
 
-        {/* Section 3: Priority Suggestion */}
-        <Card className="p-6 sm:p-7 border-slate-800/80">
-          <CardHeader className="p-0 pb-5 border-b border-slate-800/60 mb-5">
-            <CardTitle>3. Urgency & Priority Suggestion</CardTitle>
-            <p className="text-xs text-slate-400">
-              Indicate how severely this defect affects safety or learning operations.
+        {/* Section 3: Priority */}
+        <Card className="p-6 sm:p-7 border-[#E1E9E2]">
+          <CardHeader className="p-0 pb-4 border-b border-[#E1E9E2] mb-5">
+            <CardTitle>3. Urgency & Severity</CardTitle>
+            <p className="text-xs text-[#647168]">
+              Indicate how severely this defect affects safety, classes, or campus operations.
             </p>
           </CardHeader>
 
@@ -275,8 +389,8 @@ const ReportIssuePage = () => {
                   key={p.value}
                   className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                     isSelected
-                      ? 'bg-campus-500/10 border-campus-500 text-slate-100 ring-1 ring-campus-500/40 shadow-sm'
-                      : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:border-slate-700'
+                      ? 'bg-[#EAF6EE] border-[#168451] text-[#17211B] ring-1 ring-[#168451]'
+                      : 'bg-white border-[#E1E9E2] text-[#647168] hover:border-[#168451]/50'
                   }`}
                 >
                   <input
@@ -286,52 +400,51 @@ const ReportIssuePage = () => {
                     {...register('priority')}
                   />
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-200">{p.label}</span>
+                    <span className="text-xs font-bold text-[#17211B] capitalize">{p.label}</span>
                     <Badge variant={p.variant} size="sm">
                       {p.value}
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-snug">{p.description}</p>
+                  <p className="text-[11px] text-[#647168] leading-snug">{p.description}</p>
                 </label>
               );
             })}
           </div>
 
-          {/* Informational Warning */}
           {selectedPriority === 'critical' ? (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5 animate-fadeIn">
-              <AlertOctagon size={16} className="text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-[#FDF2F2] border border-[#F8D2D2] text-[#C43D3D] text-xs flex items-start gap-2.5 animate-fadeIn">
+              <AlertOctagon size={16} className="shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold block">Critical Safety Notice:</span>
-                Critical safety issues are reviewed immediately by emergency maintenance staff.
+                Critical safety issues are flagged for immediate emergency maintenance response.
               </div>
             </div>
           ) : (
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs flex items-center gap-2">
-              <Info size={14} className="text-slate-500 shrink-0" />
+            <div className="p-3 rounded-xl bg-[#F7FAF7] border border-[#E1E9E2] text-[#647168] text-xs flex items-center gap-2">
+              <Info size={14} className="shrink-0" />
               <span>Priority is evaluated as a suggestion and verified by campus administration.</span>
             </div>
           )}
         </Card>
 
         {/* Section 4: Evidence Upload */}
-        <Card className="p-6 sm:p-7 border-slate-800/80">
-          <CardHeader className="p-0 pb-5 border-b border-slate-800/60 mb-5">
+        <Card className="p-6 sm:p-7 border-[#E1E9E2]">
+          <CardHeader className="p-0 pb-4 border-b border-[#E1E9E2] mb-5">
             <CardTitle>4. Evidence & Photos</CardTitle>
-            <p className="text-xs text-slate-400">
-              Upload photos, video clips, or PDF reports of the broken component (Images ≤ 5MB, PDF ≤ 10MB, Video ≤ 25MB).
+            <p className="text-xs text-[#647168]">
+              Attach clear photographic or video proof of the broken facility (Images ≤ 5MB, PDF ≤ 10MB, Video ≤ 25MB).
             </p>
           </CardHeader>
 
           {selectedFile ? (
-            <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-700 flex items-center justify-between gap-4">
+            <div className="p-4 rounded-xl bg-[#F7FAF7] border border-[#E1E9E2] flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-10 h-10 rounded-lg bg-campus-500/20 text-campus-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-[#EAF6EE] text-[#168451] flex items-center justify-center shrink-0 border border-[#CBE7D4]">
                   <File size={20} />
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-xs font-semibold text-slate-200 truncate">{selectedFile.name}</p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs font-semibold text-[#17211B] truncate">{selectedFile.name}</p>
+                  <p className="text-[11px] text-[#647168]">
                     {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB &bull; {selectedFile.type}
                   </p>
                 </div>
@@ -339,34 +452,34 @@ const ReportIssuePage = () => {
               <button
                 type="button"
                 onClick={removeFile}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                className="p-1.5 rounded-lg text-[#647168] hover:text-[#C43D3D] hover:bg-[#FDF2F2] transition-colors"
                 title="Remove file"
               >
                 <X size={18} />
               </button>
             </div>
           ) : (
-            <label className="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-slate-900/30 group">
+            <label className="border-2 border-dashed border-[#E1E9E2] hover:border-[#168451] rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-[#F7FAF7]/60 group">
               <input
                 type="file"
                 className="sr-only"
                 accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4,video/quicktime"
                 onChange={handleFileChange}
               />
-              <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-slate-400 group-hover:text-campus-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF6EE] border border-[#CBE7D4] text-[#168451] group-hover:scale-105 flex items-center justify-center mb-3 transition-all">
                 <UploadCloud size={24} />
               </div>
-              <p className="text-xs font-semibold text-slate-200 mb-1">
-                Click to browse or drop an attachment
+              <p className="text-xs font-semibold text-[#17211B] mb-1">
+                Click to browse or drop photographic evidence
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[#647168]">
                 Supports JPG, PNG, WEBP (≤5MB), PDF (≤10MB), MP4/MOV (≤25MB)
               </p>
             </label>
           )}
 
           {fileError && (
-            <p className="text-xs text-rose-400 font-medium mt-2">{fileError}</p>
+            <p className="text-xs text-[#C43D3D] font-medium mt-2">{fileError}</p>
           )}
         </Card>
 

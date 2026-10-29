@@ -28,7 +28,7 @@ const Input = React.forwardRef(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold tracking-wider text-slate-300 uppercase"
+            className="block text-xs font-semibold tracking-wide text-[#17211B]"
           >
             {label}
           </label>
@@ -36,7 +36,7 @@ const Input = React.forwardRef(
 
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute left-3.5 flex items-center pointer-events-none text-[#647168]">
               {leftIcon}
             </div>
           )}
@@ -47,13 +47,13 @@ const Input = React.forwardRef(
             name={name}
             type={inputType}
             className={cn(
-              'w-full bg-slate-900/80 border rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 transition-all duration-150',
-              'focus:outline-none focus:ring-2 focus:ring-campus-500/30 focus:border-campus-500',
+              'w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-[#17211B] placeholder-[#647168]/50 transition-all duration-150 shadow-sm',
+              'focus:outline-none focus:ring-2 focus:ring-[#168451]/20 focus:border-[#168451]',
               leftIcon ? 'pl-10' : 'pl-3.5',
               isPasswordType || rightIcon ? 'pr-10' : 'pr-3.5',
               error
-                ? 'border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/30'
-                : 'border-slate-800 hover:border-slate-700',
+                ? 'border-[#C43D3D] focus:border-[#C43D3D] focus:ring-[#C43D3D]/20'
+                : 'border-[#E1E9E2] hover:border-[#168451]/60',
               className
             )}
             {...props}
@@ -63,26 +63,26 @@ const Input = React.forwardRef(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors focus:outline-none"
+              className="absolute right-3.5 flex items-center text-[#647168] hover:text-[#17211B] transition-colors focus:outline-none"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           ) : rightIcon ? (
-            <div className="absolute right-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute right-3.5 flex items-center pointer-events-none text-[#647168]">
               {rightIcon}
             </div>
           ) : null}
         </div>
 
         {error && (
-          <p className="text-xs text-rose-400 font-medium animate-fadeIn">
+          <p className="text-xs text-[#C43D3D] font-medium animate-fadeIn">
             {error}
           </p>
         )}
 
         {helperText && !error && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#647168]">
             {helperText}
           </p>
         )}

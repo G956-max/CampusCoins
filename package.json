@@ -4,10 +4,24 @@
   "private": true,
   "description": "CampusCoins Platform - Report. Resolve. Earn. Improve.",
   "scripts": {
+    "build": "npm --prefix frontend run build",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
+    "dev:mobile": "npm --prefix mobile start",
+    "start:mobile": "npm --prefix mobile start",
+    "android:mobile": "npm --prefix mobile run android",
     "build:frontend": "npm --prefix frontend run build",
     "start:backend": "npm --prefix backend start"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "multer": "^1.4.5-lts.1",
+    "zod": "^3.24.2"
   },
   "keywords": [
     "campuscoins",

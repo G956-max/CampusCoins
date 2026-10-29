@@ -136,6 +136,47 @@ const reopenComplaint = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/complaints/check-duplicate - Check if draft complaint has probable duplicates
+ */
+const checkDuplicate = async (req, res, next) => {
+  try {
+    const { findDuplicates } = require('../services/duplicateDetectionService');
+    const { title, description, category, building_id, floor_id, room_id, general_location } = req.body;
+    const result = await findDuplicates({
+      title,
+      description,
+      category,
+      building_id,
+      floor_id,
+      room_id,
+      general_location,
+    });
+    return sendSuccess(res, 'Duplicate check completed', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/complaints/ai-classify - Suggest category and priority
+ */
+const aiClassify = async (req, res, next) => {
+  try {
+    const { classifyComplaintText, suggestPriority } = require('../services/aiService');
+    const { title, description, category } = req.body;
+    const categoryPrediction = await classifyComplaintText(title, description);
+    const prioritySuggestion = suggestPriority(category || categoryPrediction.suggestedCategory, title, description);
+
+    return sendSuccess(res, 'AI suggestions computed', {
+      category: categoryPrediction,
+      priority: prioritySuggestion,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createComplaint,
   getMyComplaints,
@@ -143,4 +184,6 @@ module.exports = {
   uploadEvidence,
   verifyResolution,
   reopenComplaint,
+  checkDuplicate,
+  aiClassify,
 };

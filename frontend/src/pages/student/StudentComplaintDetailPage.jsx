@@ -1,26 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Calendar,
-  Clock,
   MapPin,
-  FileText,
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
   XCircle,
   Upload,
-  UserCheck,
-  ShieldAlert,
-  Send,
-  Sparkles,
 } from 'lucide-react';
-import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/common/Card';
 import Modal from '../../components/common/Modal';
-import Badge from '../../components/common/Badge';
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge';
 import PriorityBadge from '../../components/complaints/PriorityBadge';
 import EvidenceGallery from '../../components/complaints/EvidenceGallery';
@@ -157,12 +148,12 @@ const StudentComplaintDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-48 bg-slate-800 rounded-lg" />
-        <div className="h-32 bg-slate-900 rounded-2xl" />
+      <div className="space-y-6 animate-pulse max-w-7xl mx-auto">
+        <div className="h-8 w-48 bg-slate-200 rounded-lg" />
+        <div className="h-32 bg-white rounded-2xl border border-[#E1E9E2]" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-96 bg-slate-900 rounded-2xl" />
-          <div className="h-96 bg-slate-900 rounded-2xl" />
+          <div className="lg:col-span-2 h-96 bg-white rounded-2xl border border-[#E1E9E2]" />
+          <div className="h-96 bg-white rounded-2xl border border-[#E1E9E2]" />
         </div>
       </div>
     );
@@ -170,10 +161,10 @@ const StudentComplaintDetailPage = () => {
 
   if (error || !complaint) {
     return (
-      <div className="p-8 text-center rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
-        <AlertTriangle size={36} className="text-rose-400 mx-auto" />
-        <h2 className="text-lg font-semibold text-white">Unable to Load Complaint</h2>
-        <p className="text-sm text-slate-400 max-w-md mx-auto">{error}</p>
+      <div className="p-8 text-center rounded-2xl bg-white border border-[#E1E9E2] space-y-4 max-w-xl mx-auto shadow-xs">
+        <AlertTriangle size={36} className="text-rose-600 mx-auto" />
+        <h2 className="text-lg font-bold text-[#17211B]">Unable to Load Complaint</h2>
+        <p className="text-sm text-[#647168]">{error}</p>
         <Button variant="outline" size="sm" onClick={() => navigate('/student/complaints')}>
           Back to My Complaints
         </Button>
@@ -187,20 +178,20 @@ const StudentComplaintDetailPage = () => {
   const isReopened = complaint.status === COMPLAINT_STATUSES.REOPENED;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto">
       {/* Back Button & Top Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/student/complaints')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#647168] hover:text-[#168451] transition-colors"
         >
           <ArrowLeft size={16} />
           Back to My Complaints
         </button>
 
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-[#647168]">
           <span>Tracking Code:</span>
-          <span className="font-mono font-bold text-campus-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
+          <span className="font-mono font-bold text-[#168451] bg-[#EAF6EE] border border-[#CBE7D4] px-2.5 py-1 rounded-lg">
             {complaint.tracking_code || complaint.id?.slice(0, 8)}
           </span>
         </div>
@@ -208,18 +199,18 @@ const StudentComplaintDetailPage = () => {
 
       {/* Verification Alert Banner (Action Required) */}
       {isResolved && (
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border-2 border-emerald-500/60 shadow-lg shadow-emerald-500/10 space-y-4">
+        <div className="p-6 rounded-2xl bg-[#EAF6EE] border-2 border-[#168451] shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="p-1.5 rounded-lg bg-white text-[#168451] border border-[#CBE7D4]">
                   <CheckCircle2 size={20} />
                 </span>
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-[#17211B]">
                   Technician Marked This Issue as Resolved
                 </h3>
               </div>
-              <p className="text-xs text-emerald-200/80 pl-8">
+              <p className="text-xs text-[#647168] pl-8">
                 Has the issue been resolved to your satisfaction? Your confirmation closes this complaint ticket.
               </p>
             </div>
@@ -231,7 +222,6 @@ const StudentComplaintDetailPage = () => {
                 leftIcon={<CheckCircle2 size={16} />}
                 onClick={handleVerify}
                 disabled={actionLoading}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold"
               >
                 Yes, Issue Resolved
               </Button>
@@ -251,14 +241,14 @@ const StudentComplaintDetailPage = () => {
 
       {/* Rejection Notice Banner */}
       {isRejected && (
-        <div className="p-5 rounded-2xl bg-rose-950/40 border border-rose-800/80 space-y-2">
-          <div className="flex items-center gap-2 text-rose-300 font-semibold text-sm">
+        <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200 space-y-2">
+          <div className="flex items-center gap-2 text-rose-800 font-bold text-sm">
             <XCircle size={18} />
             <span>Complaint Rejected by Administration</span>
           </div>
-          <div className="text-xs text-rose-200/90 pl-6 space-y-1">
-            <p className="font-semibold text-rose-300">Reason for rejection:</p>
-            <p className="p-3 rounded-xl bg-slate-950/60 border border-rose-900/60 italic">
+          <div className="text-xs text-rose-700 pl-6 space-y-1">
+            <p className="font-semibold text-rose-800">Reason for rejection:</p>
+            <p className="p-3 rounded-xl bg-white border border-rose-200 italic text-rose-900">
               "{complaint.rejection_reason || 'No detailed reason provided.'}"
             </p>
           </div>
@@ -267,14 +257,14 @@ const StudentComplaintDetailPage = () => {
 
       {/* Reopened Notice Banner */}
       {isReopened && (
-        <div className="p-5 rounded-2xl bg-amber-950/40 border border-amber-800/80 space-y-2">
-          <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
+        <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+          <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
             <RotateCcw size={18} />
             <span>Complaint Reopened by Student</span>
           </div>
-          <div className="text-xs text-amber-200/90 pl-6 space-y-1">
-            <p className="font-semibold text-amber-300">Student feedback note:</p>
-            <p className="p-3 rounded-xl bg-slate-950/60 border border-amber-900/60 italic">
+          <div className="text-xs text-amber-700 pl-6 space-y-1">
+            <p className="font-semibold text-amber-800">Student feedback note:</p>
+            <p className="p-3 rounded-xl bg-white border border-amber-200 italic text-amber-900">
               "{complaint.reopen_reason || 'Issue reported as still persisting.'}"
             </p>
           </div>
@@ -283,8 +273,8 @@ const StudentComplaintDetailPage = () => {
 
       {/* Verified Banner */}
       {isVerified && (
-        <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-800/60 flex items-center gap-3 text-emerald-300 text-xs">
-          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+        <div className="p-4 rounded-2xl bg-[#EAF6EE] border border-[#CBE7D4] flex items-center gap-3 text-[#168451] text-xs">
+          <CheckCircle2 size={18} className="text-[#168451] shrink-0" />
           <span>
             <strong>Resolution Confirmed & Closed:</strong> You verified that this issue was satisfactorily repaired.
           </span>
@@ -296,17 +286,17 @@ const StudentComplaintDetailPage = () => {
         {/* Left Column: Complaint Details, Evidence, Timeline */}
         <div className="lg:col-span-2 space-y-6">
           {/* Main Complaint Overview Card */}
-          <Card>
-            <CardHeader className="border-b border-slate-800 pb-4">
+          <Card className="bg-white border-[#E1E9E2] shadow-xs">
+            <CardHeader className="border-b border-[#E1E9E2] pb-4">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded">
+                  <span className="text-xs font-semibold text-[#17211B] bg-[#F7FAF7] border border-[#E1E9E2] px-2.5 py-0.5 rounded">
                     {complaint.category}
                   </span>
                   <PriorityBadge priority={complaint.priority} />
                   <ComplaintStatusBadge status={complaint.status} />
                 </div>
-                <CardTitle className="text-xl text-white font-bold">
+                <CardTitle className="text-xl text-[#17211B] font-bold">
                   {complaint.title}
                 </CardTitle>
               </div>
@@ -315,21 +305,21 @@ const StudentComplaintDetailPage = () => {
             <CardContent className="pt-5 space-y-6">
               {/* Description */}
               <div>
-                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-bold text-[#647168] uppercase tracking-wider mb-2">
                   Detailed Description
                 </h4>
-                <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
+                <p className="text-sm text-[#17211B] leading-relaxed whitespace-pre-line bg-[#F7FAF7] p-4 rounded-xl border border-[#E1E9E2]">
                   {complaint.description}
                 </p>
               </div>
 
               {/* Location Summary */}
               <div>
-                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-bold text-[#647168] uppercase tracking-wider mb-2">
                   Location Specified
                 </h4>
-                <div className="flex items-center gap-2.5 text-xs text-slate-300 p-3 rounded-xl bg-slate-950/40 border border-slate-800">
-                  <MapPin size={16} className="text-campus-400 shrink-0" />
+                <div className="flex items-center gap-2.5 text-xs text-[#17211B] p-3 rounded-xl bg-[#F7FAF7] border border-[#E1E9E2]">
+                  <MapPin size={16} className="text-[#168451] shrink-0" />
                   <span>{getLocationString(complaint)}</span>
                 </div>
               </div>
@@ -337,13 +327,13 @@ const StudentComplaintDetailPage = () => {
           </Card>
 
           {/* Evidence Attachments Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-800 pb-4">
+          <Card className="bg-white border-[#E1E9E2] shadow-xs">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-[#E1E9E2] pb-4">
               <div>
-                <CardTitle className="text-base text-white">
+                <CardTitle className="text-base text-[#17211B]">
                   Media & Evidence Attachments
                 </CardTitle>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[#647168] mt-0.5">
                   Photos and documents submitted with this complaint
                 </p>
               </div>
@@ -366,12 +356,12 @@ const StudentComplaintDetailPage = () => {
           </Card>
 
           {/* Chronological Lifecycle Timeline */}
-          <Card>
-            <CardHeader className="border-b border-slate-800 pb-4">
-              <CardTitle className="text-base text-white">
+          <Card className="bg-white border-[#E1E9E2] shadow-xs">
+            <CardHeader className="border-b border-[#E1E9E2] pb-4">
+              <CardTitle className="text-base text-[#17211B]">
                 Complaint Lifecycle & Audit History
               </CardTitle>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#647168] mt-0.5">
                 Transparent step-by-step progress from submission to resolution
               </p>
             </CardHeader>
@@ -385,43 +375,43 @@ const StudentComplaintDetailPage = () => {
         {/* Right Sidebar: Meta Information */}
         <div className="space-y-6">
           {/* Metadata Card */}
-          <Card>
-            <CardHeader className="border-b border-slate-800 pb-3">
-              <CardTitle className="text-sm font-semibold text-white">
+          <Card className="bg-white border-[#E1E9E2] shadow-xs">
+            <CardHeader className="border-b border-[#E1E9E2] pb-3">
+              <CardTitle className="text-sm font-bold text-[#17211B]">
                 Ticket Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-4 space-y-4 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                <span className="text-slate-400">Tracking Code</span>
-                <span className="font-mono font-semibold text-slate-200">
+            <CardContent className="pt-4 space-y-3.5 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E1E9E2]">
+                <span className="text-[#647168]">Tracking Code</span>
+                <span className="font-mono font-bold text-[#17211B]">
                   {complaint.tracking_code || complaint.id?.slice(0, 8)}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                <span className="text-slate-400">Submitted On</span>
-                <span className="text-slate-200">{formatDate(complaint.created_at)}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-[#E1E9E2]">
+                <span className="text-[#647168]">Submitted On</span>
+                <span className="text-[#17211B] font-medium">{formatDate(complaint.created_at)}</span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                <span className="text-slate-400">Last Updated</span>
-                <span className="text-slate-200">{formatDate(complaint.updated_at)}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-[#E1E9E2]">
+                <span className="text-[#647168]">Last Updated</span>
+                <span className="text-[#17211B] font-medium">{formatDate(complaint.updated_at)}</span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                <span className="text-slate-400">Category</span>
-                <span className="font-medium text-slate-200">{complaint.category}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-[#E1E9E2]">
+                <span className="text-[#647168]">Category</span>
+                <span className="font-bold text-[#17211B]">{complaint.category}</span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                <span className="text-slate-400">Current Status</span>
+              <div className="flex items-center justify-between pb-2 border-b border-[#E1E9E2]">
+                <span className="text-[#647168]">Current Status</span>
                 <ComplaintStatusBadge status={complaint.status} size="sm" />
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Assigned Technician</span>
-                <span className="font-medium text-slate-200">
+                <span className="text-[#647168]">Assigned Technician</span>
+                <span className="font-bold text-[#17211B]">
                   {complaint.assigned_staff?.full_name ||
                     (complaint.assigned_to ? 'Technician Assigned' : 'Unassigned')}
                 </span>
@@ -429,10 +419,10 @@ const StudentComplaintDetailPage = () => {
             </CardContent>
           </Card>
 
-          {/* Need Help Card */}
-          <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-2">
-            <h4 className="text-xs font-semibold text-white">CampusCoins SLA Commitment</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+          {/* SLA Commitment Card */}
+          <div className="p-4 rounded-2xl bg-[#EAF6EE] border border-[#CBE7D4] space-y-2">
+            <h4 className="text-xs font-bold text-[#168451]">CampusCoins SLA Commitment</h4>
+            <p className="text-xs text-[#647168] leading-relaxed">
               Standard campus maintenance tickets are reviewed within 24 hours. Critical issues
               are escalated immediately to emergency facility technicians.
             </p>
@@ -470,17 +460,17 @@ const StudentComplaintDetailPage = () => {
       >
         <form onSubmit={handleReopen} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Reason for Reopening <span className="text-rose-400">*</span>
+            <label className="block text-xs font-bold text-[#17211B] mb-1.5">
+              Reason for Reopening <span className="text-rose-500">*</span>
             </label>
             <textarea
               rows={4}
               value={reopenReason}
               onChange={(e) => setReopenReason(e.target.value)}
               placeholder="Describe why the issue is not fixed (e.g. 'Water is still leaking after the valve was replaced')..."
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              className="w-full px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] placeholder-[#647168] focus:outline-none focus:border-rose-500"
             />
-            {reopenError && <p className="text-xs text-rose-400 mt-1">{reopenError}</p>}
+            {reopenError && <p className="text-xs text-rose-600 mt-1">{reopenError}</p>}
           </div>
         </form>
       </Modal>
@@ -515,17 +505,17 @@ const StudentComplaintDetailPage = () => {
       >
         <form onSubmit={handleUploadEvidence} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-[#17211B] mb-1.5">
               Choose File (Images up to 5MB, PDF up to 10MB)
             </label>
             <input
               type="file"
               accept="image/*,.pdf,video/mp4"
               onChange={(e) => setUploadFile(e.target.files[0])}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 file:mr-3 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-800 file:text-slate-200"
+              className="w-full px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] file:mr-3 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-[#EAF6EE] file:text-[#168451] file:font-semibold"
             />
-            {uploadError && <p className="text-xs text-rose-400 mt-1">{uploadError}</p>}
-            {uploadSuccess && <p className="text-xs text-emerald-400 mt-1">{uploadSuccess}</p>}
+            {uploadError && <p className="text-xs text-rose-600 mt-1">{uploadError}</p>}
+            {uploadSuccess && <p className="text-xs text-[#168451] font-semibold mt-1">{uploadSuccess}</p>}
           </div>
         </form>
       </Modal>

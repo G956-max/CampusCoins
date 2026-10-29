@@ -1,10 +1,10 @@
 import React from 'react';
-import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import useHealthCheck from '../../hooks/useHealthCheck';
 import { cn } from '../../utils/cn';
 
 const BackendStatusBadge = ({ className, compact = false }) => {
-  const { isOnline, latencyMs, message, loading, refetch } = useHealthCheck();
+  const { isOnline, latencyMs, loading, refetch } = useHealthCheck();
 
   if (compact) {
     return (
@@ -15,15 +15,15 @@ const BackendStatusBadge = ({ className, compact = false }) => {
         className={cn(
           'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
           isOnline
-            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
-            : 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20',
+            ? 'bg-[#EAF6EE] text-[#168451] border-[#CBE7D4] hover:bg-[#CBE7D4]'
+            : 'bg-[#FDF2F2] text-[#C43D3D] border-[#F8D2D2] hover:bg-[#F8D2D2]',
           className
         )}
       >
         <span
           className={cn(
             'w-2 h-2 rounded-full',
-            isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+            isOnline ? 'bg-[#168451] animate-pulse' : 'bg-[#C43D3D]'
           )}
         />
         <span>{isOnline ? `API: ${latencyMs}ms` : 'API Offline'}</span>
@@ -34,10 +34,10 @@ const BackendStatusBadge = ({ className, compact = false }) => {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-medium border backdrop-blur-md transition-all',
+        'inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
         isOnline
-          ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30 shadow-sm shadow-emerald-500/10'
-          : 'bg-rose-950/40 text-rose-300 border-rose-500/30',
+          ? 'bg-[#EAF6EE] text-[#168451] border-[#CBE7D4]'
+          : 'bg-[#FDF2F2] text-[#C43D3D] border-[#F8D2D2]',
         className
       )}
     >
@@ -45,7 +45,7 @@ const BackendStatusBadge = ({ className, compact = false }) => {
         <span
           className={cn(
             'w-2 h-2 rounded-full shrink-0',
-            isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+            isOnline ? 'bg-[#168451] animate-pulse' : 'bg-[#C43D3D]'
           )}
         />
         <span className="font-semibold">
@@ -54,7 +54,7 @@ const BackendStatusBadge = ({ className, compact = false }) => {
       </div>
 
       {isOnline && latencyMs !== null && (
-        <span className="text-[10px] text-emerald-400/80 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+        <span className="text-[10px] text-[#168451] bg-white px-1.5 py-0.5 rounded border border-[#CBE7D4]">
           {latencyMs}ms
         </span>
       )}
@@ -62,7 +62,7 @@ const BackendStatusBadge = ({ className, compact = false }) => {
       <button
         type="button"
         onClick={refetch}
-        className="text-slate-400 hover:text-slate-200 transition-colors p-0.5 ml-0.5 focus:outline-none"
+        className="text-[#647168] hover:text-[#17211B] transition-colors p-0.5 ml-0.5 focus:outline-none cursor-pointer"
         title="Check health again"
       >
         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />

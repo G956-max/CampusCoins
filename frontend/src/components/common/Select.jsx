@@ -24,7 +24,7 @@ const Select = React.forwardRef(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-xs font-semibold tracking-wider text-slate-300 uppercase"
+            className="block text-xs font-semibold tracking-wide text-[#17211B]"
           >
             {label}
           </label>
@@ -36,17 +36,17 @@ const Select = React.forwardRef(
             id={selectId}
             name={name}
             className={cn(
-              'w-full appearance-none bg-slate-900/80 border rounded-xl px-3.5 py-2.5 pr-10 text-sm text-slate-100 transition-all duration-150',
-              'focus:outline-none focus:ring-2 focus:ring-campus-500/30 focus:border-campus-500 cursor-pointer',
+              'w-full appearance-none bg-white border rounded-xl px-3.5 py-2.5 pr-10 text-sm text-[#17211B] transition-all duration-150 shadow-sm',
+              'focus:outline-none focus:ring-2 focus:ring-[#168451]/20 focus:border-[#168451] cursor-pointer',
               error
-                ? 'border-rose-500/80 focus:border-rose-500'
-                : 'border-slate-800 hover:border-slate-700',
+                ? 'border-[#C43D3D] focus:border-[#C43D3D]'
+                : 'border-[#E1E9E2] hover:border-[#168451]/60',
               className
             )}
             {...props}
           >
             {placeholder && (
-              <option value="" disabled className="bg-slate-900 text-slate-500">
+              <option value="" disabled className="bg-white text-[#647168]">
                 {placeholder}
               </option>
             )}
@@ -57,7 +57,7 @@ const Select = React.forwardRef(
                 <option
                   key={value}
                   value={value}
-                  className="bg-slate-900 text-slate-100 py-1"
+                  className="bg-white text-[#17211B] py-1"
                 >
                   {optLabel}
                 </option>
@@ -65,19 +65,19 @@ const Select = React.forwardRef(
             })}
           </select>
 
-          <div className="absolute right-3.5 flex items-center pointer-events-none text-slate-400">
+          <div className="absolute right-3.5 flex items-center pointer-events-none text-[#647168]">
             <ChevronDown size={18} />
           </div>
         </div>
 
         {error && (
-          <p className="text-xs text-rose-400 font-medium">
+          <p className="text-xs text-[#C43D3D] font-medium">
             {error}
           </p>
         )}
 
         {helperText && !error && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#647168]">
             {helperText}
           </p>
         )}

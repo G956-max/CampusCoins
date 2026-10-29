@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../config/supabase';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL !== undefined
+    ? import.meta.env.VITE_API_BASE_URL
+    : import.meta.env.PROD
+    ? ''
+    : 'http://localhost:5000';
 
 /**
  * Standardized Axios client instance
@@ -32,8 +37,12 @@ api.interceptors.request.use(
 
     // 2. Fallback to mock session token from localStorage
     const savedRole = localStorage.getItem('campuscoins_mock_role') || 'student';
+    const savedUserId = localStorage.getItem('campuscoins_mock_user_id') ||
+      (savedRole === 'staff' ? 'b8000000-0000-0000-0000-000000000002' : savedRole === 'admin' ? 'b8000000-0000-0000-0000-000000000003' : 'b8000000-0000-0000-0000-000000000001');
+
     config.headers.Authorization = `Bearer mock-${savedRole}-token`;
     config.headers['x-mock-role'] = savedRole;
+    config.headers['x-mock-user-id'] = savedUserId;
 
     return config;
   },

@@ -42,36 +42,36 @@ const Modal = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-[#17211B]/40 backdrop-blur-sm"
           />
 
           {/* Dialog Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'relative w-full rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl z-10 overflow-hidden flex flex-col',
+              'relative w-full rounded-2xl bg-white border border-[#E1E9E2] shadow-2xl z-10 overflow-hidden flex flex-col text-[#17211B]',
               maxWidth,
               className
             )}
           >
             {/* Header */}
             {(title || description) && (
-              <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-800">
+              <div className="flex items-start justify-between p-6 pb-4 border-b border-[#E1E9E2]">
                 <div className="space-y-1">
                   {title && (
-                    <h2 className="text-lg font-bold text-slate-100">{title}</h2>
+                    <h2 className="text-lg font-bold text-[#17211B]">{title}</h2>
                   )}
                   {description && (
-                    <p className="text-xs text-slate-400">{description}</p>
+                    <p className="text-xs text-[#647168]">{description}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors focus:outline-none"
+                  className="p-1.5 rounded-lg text-[#647168] hover:text-[#17211B] hover:bg-[#EAF6EE] transition-colors focus:outline-none"
                   aria-label="Close modal"
                 >
                   <X size={20} />
@@ -86,7 +86,7 @@ const Modal = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-4 px-6 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
+              <div className="p-4 px-6 border-t border-[#E1E9E2] bg-[#F7FAF7] flex items-center justify-end gap-3">
                 {footer}
               </div>
             )}

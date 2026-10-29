@@ -1,7 +1,19 @@
+const crypto = require('crypto');
 const { getSupabaseClient } = require('../config/supabase');
 const { logAudit } = require('./auditService');
 const { createNotification } = require('./notificationService');
 const logger = require('../utils/logger');
+const {
+  processComplaintVerifiedReward,
+  processEvidenceVerifiedReward,
+  processHighImpactReward,
+  processResolutionVerifiedReward,
+  processSpamPenalty,
+  processFakeReportPenalty,
+  processDuplicateReward,
+} = require('./coinService');
+const { checkBadges } = require('./badgeService');
+const { updateMissionProgress } = require('./missionService');
 
 // Allowed status transitions map
 const ALLOWED_TRANSITIONS = {
@@ -16,13 +28,43 @@ const ALLOWED_TRANSITIONS = {
 };
 
 /**
+ * Check if a complaint is assigned to a specific staff user ID
+ * Handles both UUID and mock development IDs
+ */
+const isStaffAssigned = (complaint, staffId) => {
+  if (!complaint || !staffId) return false;
+  const staffIds = [
+    complaint.assigned_staff_id,
+    complaint.assigned_to,
+    ...(complaint.assignments || []).map((a) => a.staff_id),
+  ].filter(Boolean);
+
+  if (staffIds.includes(staffId)) return true;
+  if (
+    (staffId === 'b8000000-0000-0000-0000-000000000002' || staffId === 'mock-staff-id') &&
+    staffIds.some((id) => id === 'mock-staff-id' || id === 'b8000000-0000-0000-0000-000000000002')
+  ) {
+    return true;
+  }
+  return false;
+};
+
+/**
  * Initial In-Memory Seed Data for Fallback/Preview Mode
  */
 const SEED_BUILDINGS = [
-  { id: 'b1000000-0000-0000-0000-000000000001', name: 'Main Academic Block', code: 'MB', description: 'Primary engineering classrooms' },
-  { id: 'b1000000-0000-0000-0000-000000000002', name: 'Science & Research Block', code: 'SB', description: 'Laboratories & research' },
-  { id: 'b1000000-0000-0000-0000-000000000003', name: 'Administrative Block', code: 'AB', description: 'Dean & student affairs' },
-  { id: 'b1000000-0000-0000-0000-000000000004', name: 'Central Library', code: 'LB', description: 'Reference stacks & digital commons' },
+  { id: 'b1000000-0000-0000-0000-000000000001', name: 'Main Academic & Admin Block', code: 'MB', description: 'Principal office, administrative departments, conference hall' },
+  { id: 'b1000000-0000-0000-0000-000000000002', name: 'CSE, IT & MCA Computing Block', code: 'CSEB', description: 'Computer science, IT, AICTE IDEA lab, server rooms' },
+  { id: 'b1000000-0000-0000-0000-000000000003', name: 'Science & Humanities Block (First Year)', code: 'SHB', description: 'First year engineering classrooms, physics & chemistry labs' },
+  { id: 'b1000000-0000-0000-0000-000000000004', name: 'Central Library & Digital Commons', code: 'LIB', description: 'Reference stacks, digital journals, reading halls' },
+  { id: 'b1000000-0000-0000-0000-000000000005', name: 'ECE & EIE Block', code: 'ECEB', description: 'VLSI design, embedded systems, instrumentation labs' },
+  { id: 'b1000000-0000-0000-0000-000000000006', name: 'Mechanical & Robotics Engineering Block', code: 'MECHB', description: 'CAD/CAM labs, CNC workshop, machine shop' },
+  { id: 'b1000000-0000-0000-0000-000000000007', name: 'Civil & Agricultural Engineering Block', code: 'CIVILB', description: 'Structural testing, soil mechanics, environmental lab' },
+  { id: 'b1000000-0000-0000-0000-000000000008', name: 'EEE & Chemical Engineering Block', code: 'EEEB', description: 'Power electronics, electric machines, chemical reaction lab' },
+  { id: 'b1000000-0000-0000-0000-000000000009', name: 'Student Canteen & Food Court', code: 'CAN', description: 'Multi-cuisine cafeteria, dining hall, coin redemption counter' },
+  { id: 'b1000000-0000-0000-0000-000000000010', name: 'Convention Center & Auditorium', code: 'AUD', description: '1,500-seat central auditorium for seminars and cultural events' },
+  { id: 'b1000000-0000-0000-0000-000000000011', name: 'Sports Arena & Athletic Grounds', code: 'SPRT', description: 'Track, basketball court, badminton, fitness center' },
+  { id: 'b1000000-0000-0000-0000-000000000012', name: 'Diamond Hostel & Student Residences', code: 'HSTL', description: 'Student residential living quarters and recreation mess' },
 ];
 
 const SEED_FLOORS = [
@@ -182,7 +224,7 @@ class ComplaintService {
    */
   async createComplaint({ studentId, title, description, category, priority = 'medium', buildingId, floorId, roomId, generalLocation }) {
     const timestamp = new Date().toISOString();
-    const id = `c${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}-4000-8000-${Math.random().toString(16).substring(2, 14)}`;
+    const id = crypto.randomUUID();
     const trackingCode = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newComplaint = {
@@ -209,15 +251,17 @@ class ComplaintService {
     if (supabase) {
       try {
         const { data, error } = await supabase.from('complaints').insert(newComplaint).select().single();
-        if (error) throw error;
-
-        // Add initial timeline update
-        await supabase.from('complaint_updates').insert({
-          complaint_id: id,
-          updated_by: studentId,
-          status: 'submitted',
-          comment: 'Complaint created and submitted for review.',
-        });
+        if (error) {
+          logger.warn(`Supabase createComplaint notice: ${error.message}`);
+        } else {
+          // Add initial timeline update
+          await supabase.from('complaint_updates').insert({
+            complaint_id: id,
+            updated_by: studentId,
+            status: 'submitted',
+            comment: 'Complaint created and submitted for review.',
+          });
+        }
       } catch (err) {
         logger.warn(`Supabase createComplaint notice: ${err.message}`);
       }
@@ -311,9 +355,7 @@ class ComplaintService {
     }
 
     if (user.role === 'staff') {
-      const isAssigned =
-        complaint.assigned_staff_id === user.id ||
-        (complaint.assignments && complaint.assignments.some((a) => a.staff_id === user.id));
+      const isAssigned = isStaffAssigned(complaint, user.id);
       if (!isAssigned) {
         const err = new Error('Access denied: This complaint is not assigned to your account.');
         err.statusCode = 403;
@@ -345,13 +387,11 @@ class ComplaintService {
         if (priority) query = query.eq('priority', priority);
         if (search) query = query.ilike('title', `%${search}%`);
 
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
-        query = query.range(from, to);
-
-        const { data, count, error } = await query;
-        if (!error && data) {
-          return { data, total: count || data.length, page, limit };
+        const { data, error } = await query;
+        if (!error && Array.isArray(data)) {
+          const existingIds = new Set(data.map((d) => d.id));
+          const unsynced = list.filter((c) => !existingIds.has(c.id));
+          list = [...unsynced, ...data];
         }
       } catch (err) {
         logger.warn(`Supabase getStudentComplaints notice: ${err.message}`);
@@ -364,16 +404,16 @@ class ComplaintService {
     if (priority) list = list.filter((c) => c.priority === priority);
     if (search) {
       const s = search.toLowerCase();
-      list = list.filter((c) => c.title.toLowerCase().includes(s) || c.id.toLowerCase().includes(s));
+      list = list.filter((c) => c.title?.toLowerCase().includes(s) || c.id?.toLowerCase().includes(s) || c.tracking_code?.toLowerCase().includes(s));
     }
 
     const total = list.length;
     const start = (page - 1) * limit;
     const paged = list.slice(start, start + limit).map((c) => ({
       ...c,
-      building: SEED_BUILDINGS.find((b) => b.id === c.building_id),
-      floor: SEED_FLOORS.find((f) => f.id === c.floor_id),
-      room: SEED_ROOMS.find((r) => r.id === c.room_id),
+      building: c.building || SEED_BUILDINGS.find((b) => b.id === c.building_id),
+      floor: c.floor || SEED_FLOORS.find((f) => f.id === c.floor_id),
+      room: c.room || SEED_ROOMS.find((r) => r.id === c.room_id),
     }));
 
     return { data: paged, total, page, limit };
@@ -383,7 +423,7 @@ class ComplaintService {
    * List Complaints for Staff (assigned to them only)
    */
   async getStaffComplaints(staffId, { status, priority, category, search, page = 1, limit = 10 } = {}) {
-    let list = inMemoryComplaints.filter((c) => c.assigned_staff_id === staffId);
+    let list = inMemoryComplaints.filter((c) => isStaffAssigned(c, staffId));
 
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -401,13 +441,11 @@ class ComplaintService {
         if (category) query = query.eq('category', category);
         if (search) query = query.ilike('title', `%${search}%`);
 
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
-        query = query.range(from, to);
-
-        const { data, count, error } = await query;
-        if (!error && data) {
-          return { data, total: count || data.length, page, limit };
+        const { data, error } = await query;
+        if (!error && Array.isArray(data)) {
+          const existingIds = new Set(data.map((d) => d.id));
+          const unsynced = list.filter((c) => !existingIds.has(c.id));
+          list = [...unsynced, ...data];
         }
       } catch (err) {
         logger.warn(`Supabase getStaffComplaints notice: ${err.message}`);
@@ -419,16 +457,18 @@ class ComplaintService {
     if (category) list = list.filter((c) => c.category === category);
     if (search) {
       const s = search.toLowerCase();
-      list = list.filter((c) => c.title.toLowerCase().includes(s) || c.id.toLowerCase().includes(s));
+      list = list.filter((c) => c.title?.toLowerCase().includes(s) || c.id?.toLowerCase().includes(s) || c.tracking_code?.toLowerCase().includes(s));
     }
 
     const total = list.length;
     const start = (page - 1) * limit;
     const paged = list.slice(start, start + limit).map((c) => ({
       ...c,
-      building: SEED_BUILDINGS.find((b) => b.id === c.building_id),
-      floor: SEED_FLOORS.find((f) => f.id === c.floor_id),
-      room: SEED_ROOMS.find((r) => r.id === c.room_id),
+      assigned_to: c.assigned_to || (staffId === 'b8000000-0000-0000-0000-000000000002' || staffId === 'mock-staff-id' ? 'mock-staff-id' : c.assigned_staff_id),
+      assigned_staff_id: (staffId === 'mock-staff-id' || staffId === 'b8000000-0000-0000-0000-000000000002') ? 'mock-staff-id' : c.assigned_staff_id,
+      building: c.building || SEED_BUILDINGS.find((b) => b.id === c.building_id),
+      floor: c.floor || SEED_FLOORS.find((f) => f.id === c.floor_id),
+      room: c.room || SEED_ROOMS.find((r) => r.id === c.room_id),
     }));
 
     return { data: paged, total, page, limit };
@@ -459,13 +499,11 @@ class ComplaintService {
         if (assigned === 'false') query = query.is('assigned_staff_id', null);
         if (search) query = query.ilike('title', `%${search}%`);
 
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
-        query = query.range(from, to);
-
-        const { data, count, error } = await query;
-        if (!error && data) {
-          return { data, total: count || data.length, page, limit };
+        const { data, error } = await query;
+        if (!error && Array.isArray(data)) {
+          const existingIds = new Set(data.map((d) => d.id));
+          const unsynced = list.filter((c) => !existingIds.has(c.id));
+          list = [...unsynced, ...data];
         }
       } catch (err) {
         logger.warn(`Supabase getAdminComplaints notice: ${err.message}`);
@@ -480,20 +518,97 @@ class ComplaintService {
     if (assigned === 'false') list = list.filter((c) => !c.assigned_staff_id);
     if (search) {
       const s = search.toLowerCase();
-      list = list.filter((c) => c.title.toLowerCase().includes(s) || c.id.toLowerCase().includes(s));
+      list = list.filter((c) => c.title?.toLowerCase().includes(s) || c.id?.toLowerCase().includes(s) || c.tracking_code?.toLowerCase().includes(s));
     }
 
     const total = list.length;
     const start = (page - 1) * limit;
     const paged = list.slice(start, start + limit).map((c) => ({
       ...c,
-      building: SEED_BUILDINGS.find((b) => b.id === c.building_id),
-      floor: SEED_FLOORS.find((f) => f.id === c.floor_id),
-      room: SEED_ROOMS.find((r) => r.id === c.room_id),
-      student: { full_name: 'Alex Rivera', email: 'alex.rivera@campus.edu' },
+      building: c.building || SEED_BUILDINGS.find((b) => b.id === c.building_id),
+      floor: c.floor || SEED_FLOORS.find((f) => f.id === c.floor_id),
+      room: c.room || SEED_ROOMS.find((r) => r.id === c.room_id),
+      student: c.student || { full_name: 'Alex Rivera', email: 'alex.rivera@campus.edu' },
     }));
 
     return { data: paged, total, page, limit };
+  }
+
+  /**
+   * Admin: Explicitly Verify Complaint & Grant Verified Contribution Rewards
+   */
+  async verifyComplaintAdmin(complaintId, { isUsefulEvidence = false, isHighImpact = false } = {}, adminUser) {
+    const complaint = await this.getComplaintById(complaintId, adminUser);
+    
+    // Move to under_review if currently submitted
+    if (complaint.status === 'submitted') {
+      complaint.status = 'under_review';
+      complaint.updated_at = new Date().toISOString();
+      await this.recordStatusTransition(complaint, 'under_review', adminUser.id, 'Complaint verified as valid by administrator.');
+    }
+
+    // 1. Valid Complaint (+20 coins)
+    const validReward = await processComplaintVerifiedReward(complaint, adminUser);
+    await updateMissionProgress(complaint.student_id, 'complaint_verified', 1);
+
+    // 2. Useful Evidence (+10 coins)
+    let evidenceReward = null;
+    if (isUsefulEvidence) {
+      evidenceReward = await processEvidenceVerifiedReward(complaint, null, adminUser);
+      await updateMissionProgress(complaint.student_id, 'evidence_verified', 1);
+    }
+
+    // 3. High Impact (+30 coins)
+    let highImpactReward = null;
+    if (isHighImpact || complaint.priority === 'high' || complaint.priority === 'urgent') {
+      highImpactReward = await processHighImpactReward(complaint, adminUser);
+    }
+
+    // 4. Badges check
+    await checkBadges(complaint.student_id, {
+      verifiedComplaints: 1,
+      usefulEvidence: isUsefulEvidence ? 1 : 0,
+      highImpactIssues: isHighImpact ? 1 : 0,
+    });
+
+    return {
+      complaint,
+      rewards: {
+        validComplaint: validReward,
+        evidence: evidenceReward,
+        highImpact: highImpactReward,
+      },
+    };
+  }
+
+  /**
+   * Admin: Mark as Spam (-30 coins penalty)
+   */
+  async markSpam(complaintId, adminUser) {
+    const complaint = await this.getComplaintById(complaintId, adminUser);
+    complaint.status = 'rejected';
+    complaint.rejection_reason = 'Marked as spam by administrator.';
+    complaint.updated_at = new Date().toISOString();
+
+    await this.recordStatusTransition(complaint, 'rejected', adminUser.id, 'Marked as spam by administrator.');
+    await processSpamPenalty(complaint, adminUser);
+
+    return complaint;
+  }
+
+  /**
+   * Admin: Mark as Fake Report (-50 coins penalty)
+   */
+  async markFake(complaintId, adminUser) {
+    const complaint = await this.getComplaintById(complaintId, adminUser);
+    complaint.status = 'rejected';
+    complaint.rejection_reason = 'Marked as fake report by administrator.';
+    complaint.updated_at = new Date().toISOString();
+
+    await this.recordStatusTransition(complaint, 'rejected', adminUser.id, 'Marked as fake report by administrator.');
+    await processFakeReportPenalty(complaint, adminUser);
+
+    return complaint;
   }
 
   /**
@@ -508,6 +623,11 @@ class ComplaintService {
 
     const comment = 'Complaint reviewed by campus administration.';
     await this.recordStatusTransition(complaint, 'under_review', adminUser.id, comment);
+
+    // Trigger reward on valid admin verification
+    await processComplaintVerifiedReward(complaint, adminUser);
+    await updateMissionProgress(complaint.student_id, 'complaint_verified', 1);
+    await checkBadges(complaint.student_id, { verifiedComplaints: 1 });
 
     await logAudit({
       userId: adminUser.id,
@@ -635,6 +755,11 @@ class ComplaintService {
       metadata: { oldPriority, newPriority },
     });
 
+    if (complaint.priority === 'high' || complaint.priority === 'urgent') {
+      await processHighImpactReward(complaint, adminUser);
+      await checkBadges(complaint.student_id, { highImpactIssues: 1 });
+    }
+
     return complaint;
   }
 
@@ -754,6 +879,11 @@ class ComplaintService {
       action: 'COMPLAINT_VERIFIED',
       entityId: complaintId,
     });
+
+    // Phase 4 Gamification: Award Resolution Verification Reward (+30 coins)
+    await processResolutionVerifiedReward(complaint, studentUser);
+    await updateMissionProgress(complaint.student_id, 'resolution_verified', 1);
+    await checkBadges(complaint.student_id, { verifiedResolutions: 1 });
 
     if (complaint.assigned_staff_id) {
       await createNotification({

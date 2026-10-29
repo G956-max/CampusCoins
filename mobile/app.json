@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "CampusCoins",
+    "slug": "campuscoins-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#168451"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.campuscoins.app"
+    },
+    "android": {
+      "package": "com.campuscoins.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#168451",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

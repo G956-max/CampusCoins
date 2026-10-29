@@ -1,23 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   Plus,
   Search,
-  Filter,
-  Clock,
   CheckCircle2,
   AlertTriangle,
   ChevronRight,
   MapPin,
   Paperclip,
   RefreshCw,
-  Sparkles,
-  ArrowUpDown,
+  Clock,
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
-import { Card, CardContent } from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge';
 import PriorityBadge from '../../components/complaints/PriorityBadge';
@@ -42,7 +38,8 @@ const StudentComplaintsPage = () => {
     setError(null);
     try {
       const res = await complaintApi.getMyComplaints();
-      setComplaints(res.data || []);
+      const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      setComplaints(list);
     } catch (err) {
       console.error('Error fetching student complaints:', err);
       setError(err.response?.data?.message || 'Failed to load complaints. Please try again.');
@@ -137,18 +134,18 @@ const StudentComplaintsPage = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto">
       {/* Page Header */}
       <PageHeader
         title="My Reported Issues"
         subtitle="Track, manage, and verify status updates on all campus issues you have raised."
         badge={
-          <Badge variant="info" size="sm" withDot>
-            Complaint Lifecycle Live
+          <Badge variant="success" size="sm" withDot>
+            Lifecycle Live
           </Badge>
         }
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
@@ -174,82 +171,82 @@ const StudentComplaintsPage = () => {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div
           onClick={() => setStatusFilter('all')}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === 'all'
-              ? 'bg-slate-900 border-campus-500/50 shadow-md shadow-campus-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-[#EAF6EE] border-[#168451] text-[#168451]'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-[#168451]/40'
           }`}
         >
-          <div className="text-xs text-slate-400">Total Reported</div>
-          <div className="text-xl font-bold text-white mt-1">{stats.total}</div>
+          <div className="text-xs text-[#647168] font-medium">Total Reported</div>
+          <div className="text-xl font-black mt-1">{stats.total}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.UNDER_REVIEW)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.UNDER_REVIEW
-              ? 'bg-slate-900 border-sky-500/50 shadow-md shadow-sky-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-sky-50 border-sky-600 text-sky-800'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-sky-300'
           }`}
         >
-          <div className="text-xs text-slate-400">Under Review</div>
-          <div className="text-xl font-bold text-sky-400 mt-1">{stats.pendingReview}</div>
+          <div className="text-xs text-[#647168] font-medium">Under Review</div>
+          <div className="text-xl font-black mt-1 text-sky-700">{stats.pendingReview}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.IN_PROGRESS)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.IN_PROGRESS
-              ? 'bg-slate-900 border-amber-500/50 shadow-md shadow-amber-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-amber-50 border-amber-600 text-amber-800'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-amber-300'
           }`}
         >
-          <div className="text-xs text-slate-400">In Progress</div>
-          <div className="text-xl font-bold text-amber-400 mt-1">{stats.inProgress}</div>
+          <div className="text-xs text-[#647168] font-medium">In Progress</div>
+          <div className="text-xl font-black mt-1 text-amber-700">{stats.inProgress}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.RESOLVED)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.RESOLVED
-              ? 'bg-slate-900 border-emerald-500/50 shadow-md shadow-emerald-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-[#EAF6EE] border-[#168451] text-[#168451]'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-[#168451]/40'
           }`}
         >
-          <div className="text-xs text-emerald-400 flex items-center gap-1 font-semibold">
+          <div className="text-xs text-[#168451] flex items-center gap-1 font-bold">
             <span>Needs Verification</span>
             {stats.awaitingVerification > 0 && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-[#168451] animate-ping" />
             )}
           </div>
-          <div className="text-xl font-bold text-emerald-400 mt-1">{stats.awaitingVerification}</div>
+          <div className="text-xl font-black text-[#168451] mt-1">{stats.awaitingVerification}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.VERIFIED)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.VERIFIED
-              ? 'bg-slate-900 border-emerald-500/50 shadow-md shadow-emerald-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-[#EAF6EE] border-[#168451] text-[#168451]'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-[#168451]/40'
           }`}
         >
-          <div className="text-xs text-slate-400">Closed & Verified</div>
-          <div className="text-xl font-bold text-slate-300 mt-1">{stats.closed}</div>
+          <div className="text-xs text-[#647168] font-medium">Closed & Verified</div>
+          <div className="text-xl font-black text-[#17211B] mt-1">{stats.closed}</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm space-y-3">
+      <div className="p-4 rounded-2xl bg-white border border-[#E1E9E2] shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
           {/* Search box */}
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#647168]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, tracking code, description..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-campus-500 focus:ring-1 focus:ring-campus-500 transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-[#E1E9E2] rounded-xl text-sm text-[#17211B] placeholder-[#647168] focus:outline-none focus:border-[#168451] focus:ring-1 focus:ring-[#168451] transition-all"
             />
           </div>
 
@@ -259,7 +256,7 @@ const StudentComplaintsPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-campus-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="all">All Statuses</option>
               <option value="submitted">Submitted</option>
@@ -276,7 +273,7 @@ const StudentComplaintsPage = () => {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-campus-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="all">All Categories</option>
               {COMPLAINT_CATEGORIES.map((cat) => (
@@ -290,7 +287,7 @@ const StudentComplaintsPage = () => {
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-campus-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="all">All Priorities</option>
               {COMPLAINT_PRIORITIES.map((p) => (
@@ -304,7 +301,7 @@ const StudentComplaintsPage = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-campus-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -316,10 +313,10 @@ const StudentComplaintsPage = () => {
 
       {/* Error state */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/80 text-rose-300 flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle size={18} />
-            <span className="text-sm">{error}</span>
+            <span className="text-sm font-medium">{error}</span>
           </div>
           <Button variant="outline" size="sm" onClick={fetchComplaints}>
             Retry
@@ -333,18 +330,18 @@ const StudentComplaintsPage = () => {
           {[1, 2, 3, 4].map((n) => (
             <div
               key={n}
-              className="h-28 rounded-2xl bg-slate-900/50 border border-slate-800/80 animate-pulse"
+              className="h-28 rounded-2xl bg-white border border-[#E1E9E2] animate-pulse"
             />
           ))}
         </div>
       ) : filteredComplaints.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-full bg-slate-800/60 flex items-center justify-center text-slate-400">
+        <div className="p-12 text-center rounded-2xl bg-white border border-[#E1E9E2] shadow-xs space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4] flex items-center justify-center">
             <FileText size={24} />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-slate-200">No issues found</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+            <h3 className="text-base font-bold text-[#17211B]">No issues found</h3>
+            <p className="text-xs text-[#647168] mt-1 max-w-md mx-auto">
               {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all' || priorityFilter !== 'all'
                 ? 'No reported issues match your active search and filter options.'
                 : "You haven't reported any campus issues yet. Found something broken? Let the administration know."}
@@ -368,56 +365,55 @@ const StudentComplaintsPage = () => {
               <div
                 key={item.id}
                 onClick={() => navigate(`/student/complaints/${item.id}`)}
-                className={`group p-5 rounded-2xl border transition-all cursor-pointer ${
+                className={`group p-5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
                   isAwaitingVerification
-                    ? 'bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500/80 shadow-md shadow-emerald-500/5'
-                    : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900 hover:border-slate-700/80'
+                    ? 'bg-[#EAF6EE] border-[#168451] hover:border-[#116B42]'
+                    : 'bg-white border-[#E1E9E2] hover:border-[#168451]/50'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   {/* Left Badges & Title */}
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-mono font-semibold text-slate-400">
+                      <span className="text-xs font-mono font-bold text-[#647168] bg-[#F7FAF7] px-2 py-0.5 rounded border border-[#E1E9E2]">
                         {item.tracking_code || item.id?.slice(0, 8)}
                       </span>
-                      <span className="text-slate-600">•</span>
-                      <span className="text-xs font-medium text-slate-300 bg-slate-800 px-2 py-0.5 rounded">
+                      <span className="text-xs font-medium text-[#17211B] bg-white border border-[#E1E9E2] px-2 py-0.5 rounded">
                         {item.category}
                       </span>
                       <PriorityBadge priority={item.priority} size="sm" />
                       <ComplaintStatusBadge status={item.status} size="sm" />
 
                       {isAwaitingVerification && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full animate-pulse">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#168451] bg-white border border-[#CBE7D4] px-2 py-0.5 rounded-full shadow-xs">
                           <CheckCircle2 size={12} />
                           Action Required: Verify Resolution
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-base font-semibold text-slate-100 group-hover:text-campus-400 transition-colors">
+                    <h3 className="text-base font-bold text-[#17211B] group-hover:text-[#168451] transition-colors">
                       {item.title}
                     </h3>
 
-                    <p className="text-xs text-slate-400 line-clamp-2 max-w-3xl leading-relaxed">
+                    <p className="text-xs text-[#647168] line-clamp-2 max-w-3xl leading-relaxed">
                       {item.description}
                     </p>
 
                     {/* Metadata Footer */}
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-[#647168] pt-1">
                       <span className="flex items-center gap-1.5">
-                        <MapPin size={13} className="text-slate-500" />
+                        <MapPin size={13} className="text-[#168451]" />
                         <span>{getLocationString(item)}</span>
                       </span>
 
                       <span className="flex items-center gap-1.5">
-                        <Clock size={13} className="text-slate-500" />
+                        <Clock size={13} className="text-[#647168]" />
                         <span>Reported {formatDate(item.created_at)}</span>
                       </span>
 
                       {item.evidence && item.evidence.length > 0 && (
-                        <span className="flex items-center gap-1 text-campus-400">
+                        <span className="flex items-center gap-1 text-[#168451] font-medium">
                           <Paperclip size={13} />
                           <span>{item.evidence.length} attachment{item.evidence.length > 1 ? 's' : ''}</span>
                         </span>
@@ -427,7 +423,7 @@ const StudentComplaintsPage = () => {
 
                   {/* Right View Arrow */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    <span className="text-xs font-semibold text-campus-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                    <span className="text-xs font-bold text-[#168451] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                       View Details
                       <ChevronRight size={16} />
                     </span>

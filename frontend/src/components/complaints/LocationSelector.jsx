@@ -21,7 +21,6 @@ const LocationSelector = ({
   const [loadingFloors, setLoadingFloors] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
 
-  // 1. Fetch Buildings on Mount
   useEffect(() => {
     let isMounted = true;
     const loadBuildings = async () => {
@@ -41,7 +40,6 @@ const LocationSelector = ({
     };
   }, []);
 
-  // 2. Fetch Floors when Building changes
   useEffect(() => {
     if (!buildingId) {
       setFloors([]);
@@ -67,7 +65,6 @@ const LocationSelector = ({
     };
   }, [buildingId]);
 
-  // 3. Fetch Rooms when Floor changes
   useEffect(() => {
     if (!floorId) {
       setRooms([]);
@@ -96,11 +93,11 @@ const LocationSelector = ({
     <div className={cn('grid grid-cols-1 md:grid-cols-3 gap-4', className)}>
       {/* 1. Building Selector */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase flex items-center justify-between">
+        <label className="block text-xs font-semibold tracking-wide text-[#17211B] flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <Building2 size={14} className="text-slate-400" /> Building
+            <Building2 size={14} className="text-[#647168]" /> Building
           </span>
-          {loadingBuildings && <Loader2 size={12} className="animate-spin text-slate-400" />}
+          {loadingBuildings && <Loader2 size={12} className="animate-spin text-[#647168]" />}
         </label>
         <select
           value={buildingId || ''}
@@ -110,11 +107,11 @@ const LocationSelector = ({
             onFloorChange('');
             onRoomChange('');
           }}
-          className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 disabled:opacity-50 focus:outline-none focus:border-campus-500 transition-colors"
+          className="w-full bg-white border border-[#E1E9E2] rounded-xl px-3.5 py-2.5 text-sm text-[#17211B] disabled:opacity-50 focus:outline-none focus:border-[#168451] focus:ring-2 focus:ring-[#168451]/20 transition-colors shadow-sm"
         >
           <option value="">Select Building</option>
           {buildings.map((b) => (
-            <option key={b.id} value={b.id} className="bg-slate-900">
+            <option key={b.id} value={b.id} className="bg-white">
               {b.name} ({b.code})
             </option>
           ))}
@@ -123,11 +120,11 @@ const LocationSelector = ({
 
       {/* 2. Floor Selector */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase flex items-center justify-between">
+        <label className="block text-xs font-semibold tracking-wide text-[#17211B] flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <Layers size={14} className="text-slate-400" /> Floor
+            <Layers size={14} className="text-[#647168]" /> Floor
           </span>
-          {loadingFloors && <Loader2 size={12} className="animate-spin text-slate-400" />}
+          {loadingFloors && <Loader2 size={12} className="animate-spin text-[#647168]" />}
         </label>
         <select
           value={floorId || ''}
@@ -136,38 +133,38 @@ const LocationSelector = ({
             onFloorChange(e.target.value);
             onRoomChange('');
           }}
-          className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 disabled:opacity-50 focus:outline-none focus:border-campus-500 transition-colors"
+          className="w-full bg-white border border-[#E1E9E2] rounded-xl px-3.5 py-2.5 text-sm text-[#17211B] disabled:opacity-50 focus:outline-none focus:border-[#168451] focus:ring-2 focus:ring-[#168451]/20 transition-colors shadow-sm"
         >
           <option value="">
             {!buildingId ? 'Choose building first' : 'Select Floor'}
           </option>
           {floors.map((f) => (
-            <option key={f.id} value={f.id} className="bg-slate-900">
+            <option key={f.id} value={f.id} className="bg-white">
               {f.floor_name || `Floor ${f.floor_number}`}
             </option>
           ))}
         </select>
       </div>
 
-      {/* 3. Room / Specific Location Selector */}
+      {/* 3. Room / Area Selector */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase flex items-center justify-between">
+        <label className="block text-xs font-semibold tracking-wide text-[#17211B] flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <MapPin size={14} className="text-slate-400" /> Room / Area
+            <MapPin size={14} className="text-[#647168]" /> Room / Specific Area
           </span>
-          {loadingRooms && <Loader2 size={12} className="animate-spin text-slate-400" />}
+          {loadingRooms && <Loader2 size={12} className="animate-spin text-[#647168]" />}
         </label>
         <select
           value={roomId || ''}
           disabled={disabled || !floorId || loadingRooms}
           onChange={(e) => onRoomChange(e.target.value)}
-          className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 disabled:opacity-50 focus:outline-none focus:border-campus-500 transition-colors"
+          className="w-full bg-white border border-[#E1E9E2] rounded-xl px-3.5 py-2.5 text-sm text-[#17211B] disabled:opacity-50 focus:outline-none focus:border-[#168451] focus:ring-2 focus:ring-[#168451]/20 transition-colors shadow-sm"
         >
           <option value="">
             {!floorId ? 'Choose floor first' : 'General Floor Location (No Room)'}
           </option>
           {rooms.map((r) => (
-            <option key={r.id} value={r.id} className="bg-slate-900">
+            <option key={r.id} value={r.id} className="bg-white">
               {r.room_number} {r.room_name ? `- ${r.room_name}` : ''}
             </option>
           ))}

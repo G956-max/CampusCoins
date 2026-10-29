@@ -3,72 +3,116 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --campus-bg: #F7FAF7;
+    --campus-surface: #FFFFFF;
+    --campus-primary: #168451;
+    --campus-primary-dark: #116B42;
+    --campus-soft: #EAF6EE;
+    --campus-text: #17211B;
+    --campus-muted: #647168;
+    --campus-border: #E1E9E2;
+    --campus-warning: #B7791F;
+    --campus-danger: #C43D3D;
+  }
+
   body {
-    background-color: #080c14;
-    color: #e2e8f0;
+    background-color: #F7FAF7;
+    color: #17211B;
     overflow-x: hidden;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Glassmorphism custom classes */
+/* Crisp Premium Light SaaS Surfaces (Replacing Dark Glassmorphism) */
 .glass-card {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid #E1E9E2;
+  box-shadow: 0 1px 3px 0 rgba(23, 33, 27, 0.04), 0 1px 2px -1px rgba(23, 33, 27, 0.04);
 }
 
 .glass-card-hover {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card-hover:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: #FFFFFF;
+  border-color: #168451;
+  box-shadow: 0 4px 14px 0 rgba(22, 132, 81, 0.08), 0 2px 4px -1px rgba(22, 132, 81, 0.04);
   transform: translateY(-2px);
 }
 
 .glass-nav {
-  background: rgba(11, 15, 25, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: #FFFFFF;
+  border-bottom: 1px solid #E1E9E2;
+  box-shadow: 0 1px 2px 0 rgba(23, 33, 27, 0.03);
 }
 
 .glass-dropdown {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border: 1px solid #E1E9E2;
+  box-shadow: 0 10px 25px -5px rgba(23, 33, 27, 0.08), 0 8px 10px -6px rgba(23, 33, 27, 0.04);
 }
 
-/* Glowing text and gradients */
+/* Polished Green Brand Gradients */
 .gradient-text-brand {
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  background: linear-gradient(135deg, #168451 0%, #116B42 50%, #0E5535 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-text-coins {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #fbbf24 100%);
+  background: linear-gradient(135deg, #168451 0%, #116B42 50%, #B7791F 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Custom subtle scrollbar */
+/* Clean Light Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: #F7FAF7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #E1E9E2;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #647168;
 }
+
+/* ESEC Interactive Building Labels on Map */
+.esec-building-label {
+  background: rgba(17, 24, 39, 0.88) !important;
+  backdrop-filter: blur(4px) !important;
+  border: 1.5px solid #168451 !important;
+  border-radius: 8px !important;
+  color: #FFFFFF !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  padding: 3px 8px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  transition: all 0.2s ease !important;
+}
+
+.esec-building-label:hover {
+  background: #168451 !important;
+  color: #FFFFFF !important;
+  transform: scale(1.06) !important;
+  border-color: #FFFFFF !important;
+}
+
+.esec-building-label::before {
+  display: none !important;
+}
+

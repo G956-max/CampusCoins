@@ -16,13 +16,33 @@ import ReportIssuePage from '../pages/student/ReportIssuePage';
 import StudentComplaintsPage from '../pages/student/StudentComplaintsPage';
 import StudentComplaintDetailPage from '../pages/student/StudentComplaintDetailPage';
 
+// Student Gamification & Wallet Pages
+import StudentWalletPage from '../pages/student/StudentWalletPage';
+import TransactionHistoryPage from '../pages/student/TransactionHistoryPage';
+import RewardStorePage from '../pages/student/RewardStorePage';
+import RedemptionHistoryPage from '../pages/student/RedemptionHistoryPage';
+import BadgesPage from '../pages/student/BadgesPage';
+import MissionsPage from '../pages/student/MissionsPage';
+import LeaderboardPage from '../pages/student/LeaderboardPage';
+
+// Staff Pages
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffComplaintsPage from '../pages/staff/StaffComplaintsPage';
 import StaffComplaintDetailPage from '../pages/staff/StaffComplaintDetailPage';
+import StaffVerifyVoucherPage from '../pages/staff/StaffVerifyVoucherPage';
 
+// Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminComplaintsPage from '../pages/admin/AdminComplaintsPage';
 import AdminComplaintDetailPage from '../pages/admin/AdminComplaintDetailPage';
+import AdminRewardsPage from '../pages/admin/AdminRewardsPage';
+import AdminRedemptionsPage from '../pages/admin/AdminRedemptionsPage';
+import AdminGamificationPage from '../pages/admin/AdminGamificationPage';
+import AdminSLAPage from '../pages/admin/AdminSLAPage';
+
+// Common Interactive Pages
+import CampusMapPage from '../pages/common/CampusMapPage';
+import CommunityBountiesPage from '../pages/common/CommunityBountiesPage';
 
 import ProfilePage from '../pages/profile/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -48,6 +68,8 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/campus-map" element={<CampusMapPage />} />
+        <Route path="/map" element={<CampusMapPage />} />
       </Route>
 
       {/* Direct /profile shortcut */}
@@ -72,7 +94,22 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="complaints" element={<StudentComplaintsPage />} />
         <Route path="complaints/new" element={<ReportIssuePage />} />
+        <Route path="report" element={<ReportIssuePage />} />
         <Route path="complaints/:id" element={<StudentComplaintDetailPage />} />
+
+        {/* Map & Bounties */}
+        <Route path="map" element={<CampusMapPage />} />
+        <Route path="bounties" element={<CommunityBountiesPage />} />
+
+        {/* Gamification & Wallet Routes */}
+        <Route path="wallet" element={<StudentWalletPage />} />
+        <Route path="wallet/transactions" element={<TransactionHistoryPage />} />
+        <Route path="rewards" element={<RewardStorePage />} />
+        <Route path="rewards/history" element={<RedemptionHistoryPage />} />
+        <Route path="badges" element={<BadgesPage />} />
+        <Route path="missions" element={<MissionsPage />} />
+        <Route path="leaderboard" element={<LeaderboardPage />} />
+
         <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/student/dashboard" replace />} />
       </Route>
@@ -89,6 +126,8 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<StaffDashboard />} />
         <Route path="complaints" element={<StaffComplaintsPage />} />
         <Route path="complaints/:id" element={<StaffComplaintDetailPage />} />
+        <Route path="verify-voucher" element={<StaffVerifyVoucherPage />} />
+        <Route path="map" element={<CampusMapPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/staff/dashboard" replace />} />
       </Route>
@@ -105,6 +144,15 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="complaints" element={<AdminComplaintsPage />} />
         <Route path="complaints/:id" element={<AdminComplaintDetailPage />} />
+        <Route path="sla" element={<AdminSLAPage />} />
+        <Route path="map" element={<CampusMapPage />} />
+        <Route path="bounties" element={<CommunityBountiesPage />} />
+
+        {/* Gamification & Rewards Admin */}
+        <Route path="rewards" element={<AdminRewardsPage />} />
+        <Route path="rewards/redemptions" element={<AdminRedemptionsPage />} />
+        <Route path="gamification" element={<AdminGamificationPage />} />
+
         <Route path="profile" element={<ProfilePage />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
       </Route>

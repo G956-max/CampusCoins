@@ -1,6 +1,11 @@
-const http = require('http');
+process.env.NODE_ENV = 'test';
+process.env.ALLOW_DEV_MOCK_AUTH = 'true';
 
-const BASE_URL = 'http://localhost:5000';
+const http = require('http');
+const app = require('../src/server');
+
+const PORT = 5000;
+const BASE_URL = `http://localhost:${PORT}`;
 
 // Helper to make HTTP requests
 function request(method, path, body = null, headers = {}) {
@@ -86,10 +91,10 @@ function uploadFileRequest(path, filename, buffer, mimeType, headers = {}) {
   });
 }
 
-// Headers for mock actors
-const STUDENT_HEADERS = { 'x-mock-role': 'student' };
+// Headers for mock actors (permitted in NODE_ENV=test)
+const STUDENT_HEADERS = { 'x-mock-role': 'student', 'x-mock-user-id': 'mock-student-id' };
 const OTHER_STUDENT_HEADERS = { 'x-mock-role': 'student', 'x-mock-user-id': 'other-student-999' };
-const ADMIN_HEADERS = { 'x-mock-role': 'admin' };
+const ADMIN_HEADERS = { 'x-mock-role': 'admin', 'x-mock-user-id': 'mock-admin-id' };
 const STAFF_HEADERS = { 'x-mock-role': 'staff', 'x-mock-user-id': 'mock-staff-id' };
 const OTHER_STAFF_HEADERS = { 'x-mock-role': 'staff', 'x-mock-user-id': 'unassigned-staff-999' };
 
@@ -110,9 +115,9 @@ function assert(condition, message, extra = null) {
 }
 
 async function runTests() {
-  console.log('\n==================================================');
-  console.log('  RUNNING PHASE 3 COMPLAINT LIFECYCLE TEST SUITE');
-  console.log('==================================================\n');
+  console.log('\n============================================================');
+  console.log('  CAMPUSCOINS INTEGRATED LIFECYCLE & SECURITY TEST SUITE');
+  console.log('============================================================\n');
 
   let complaintId = null;
   let rejectedComplaintId = null;
@@ -343,17 +348,17 @@ async function runTests() {
   // ----------------------------------------------------
   console.log('\n--- Suite 5: Security, Authorization & State Transitions ---');
 
-  // Case 22: Student attempts to view another student's complaint -> 403 Forbidden or 404 Not Found
+  // Case 22: Student attempts to view another student's complaint -> 403 Forbidden
   const resStudentIDOR = await request('GET', `/api/complaints/${complaintId}`, null, OTHER_STUDENT_HEADERS);
   assert([403, 404].includes(resStudentIDOR.status),
     'Student attempts to view another student\'s complaint -> 403/404 Forbidden/Not Found');
 
-  // Case 23: Staff attempts to update complaint not assigned to them -> 403 Forbidden or 404 Not Found
+  // Case 23: Staff attempts to update complaint not assigned to them -> 403 Forbidden
   const resStaffIDOR = await request('POST', `/api/staff/complaints/${complaintId}/start`, null, OTHER_STAFF_HEADERS);
   assert([403, 404].includes(resStaffIDOR.status),
     'Staff attempts to update complaint not assigned to them -> 403/404 Forbidden/Not Found');
 
-  // Case 24: Invalid status transition (submitted -> resolved directly) -> 400 Bad Request
+  // Case 24: Invalid status transition (submitted -> resolved directly) -> rejected
   const resInvalidSubmit = await request('POST', '/api/complaints', {
     title: 'Broken chair in room 201',
     category: 'Furniture',
@@ -370,18 +375,138 @@ async function runTests() {
     'Invalid transition (submitted -> resolved directly) -> 400/403 Rejected');
 
   // ----------------------------------------------------
+  // TEST 6: Mission Claim Security (Anti-Abuse Verification)
+  // ----------------------------------------------------
+  console.log('\n--- Suite 6: Mission Claim Security & Incomplete Mission Rejection ---');
+
+  // Case 25: Student attempts to claim mission they haven't completed -> 400 Bad Request
+  const resIncompleteMission = await request('POST', '/api/missions/m0000000-0000-0000-0000-000000000005/claim', null, OTHER_STUDENT_HEADERS);
+  assert(resIncompleteMission.status === 400,
+    'Student attempts to claim incomplete mission -> 400 Bad Request (Vulnerability Prevented)');
+
+  // ----------------------------------------------------
+  // TEST 7: Reward Redemption & Single-Use Voucher Verification
+  // ----------------------------------------------------
+  console.log('\n--- Suite 7: Reward Redemption & Single-Use Voucher Verification ---');
+
+  // Case 26: Available rewards catalog returns active items
+  const resRewards = await request('GET', '/api/rewards', null, STUDENT_HEADERS);
+  assert(resRewards.status === 200 && Array.isArray(resRewards.body?.data) && resRewards.body.data.length > 0,
+    'Student views rewards catalog -> 200 OK with active items');
+
+  const rewardToRedeem = resRewards.body.data[0];
+
+  // Case 27: Redeem reward creates voucher code with expiry
+  const resRedeem = await request('POST', `/api/rewards/${rewardToRedeem.id}/redeem`, null, STUDENT_HEADERS);
+  const voucherCode = resRedeem.body?.data?.redemption?.voucher_code;
+  assert(resRedeem.status === 201 && voucherCode && voucherCode.startsWith('VCH-'),
+    'Student redeems reward -> 201 Created with secure voucher code (VCH-...)', resRedeem);
+
+  // Case 28: Staff verifies valid voucher -> 200 OK
+  const resVerifyVoucher = await request('POST', '/api/rewards/verify-voucher', {
+    voucher_code: voucherCode,
+  }, STAFF_HEADERS);
+  assert(resVerifyVoucher.status === 200 && resVerifyVoucher.body?.data?.redemption?.status === 'fulfilled',
+    'Staff verifies valid voucher -> 200 OK, voucher marked fulfilled');
+
+  // Case 29: Staff attempts to reuse same voucher code -> 400 Bad Request (Anti-Reuse)
+  const resReuseVoucher = await request('POST', '/api/rewards/verify-voucher', {
+    voucher_code: voucherCode,
+  }, STAFF_HEADERS);
+  assert(resReuseVoucher.status === 400,
+    'Attempt to reuse already redeemed voucher -> 400 Bad Request (Anti-Reuse Enforced)');
+
+  // Case 30: Insufficient balance redemption rejection
+  const resInsufficient = await request('POST', `/api/rewards/${rewardToRedeem.id}/redeem`, null, OTHER_STUDENT_HEADERS);
+  assert(resInsufficient.status === 400 && resInsufficient.body?.message?.includes('Insufficient'),
+    'Student with insufficient balance attempts to redeem -> 400 Bad Request (Insufficient Balance)');
+
+  // Case 31: Out of stock reward redemption rejection
+  const resCreateOutOfStock = await request('POST', '/api/admin/rewards', {
+    name: 'Sold Out Limited Item',
+    description: 'Special edition item with zero remaining inventory.',
+    coin_cost: 10,
+    stock: 0,
+    category: 'Merchandise',
+    is_active: true,
+  }, ADMIN_HEADERS);
+  const outOfStockId = resCreateOutOfStock.body?.data?.id;
+
+  const resRedeemOutOfStock = await request('POST', `/api/rewards/${outOfStockId}/redeem`, null, STUDENT_HEADERS);
+  assert(resRedeemOutOfStock.status === 400 && resRedeemOutOfStock.body?.message?.includes('out of stock'),
+    'Student attempts to redeem item with 0 stock -> 400 Bad Request (Out of Stock Enforced)');
+
+  // ----------------------------------------------------
+  // TEST 8: Smart Duplicate Detection & SLA Analytics
+  // ----------------------------------------------------
+  console.log('\n--- Suite 8: Smart Duplicate Detection & SLA Analytics ---');
+
+  // Case 30: Duplicate check detects high similarity
+  const resDupCheck = await request('POST', '/api/complaints/check-duplicate', {
+    title: 'Flickering ceiling tube light in seminar room',
+    description: 'The tube light constantly flickers during classes causing severe distraction.',
+    category: 'Electrical',
+  }, STUDENT_HEADERS);
+  assert(resDupCheck.status === 200 && resDupCheck.body?.data?.hasPossibleDuplicates === true,
+    'Duplicate check detects high similarity against existing complaint -> 200 OK with match metadata');
+
+  // Case 31: Institutional Analytics Overview
+  const resAnalytics = await request('GET', '/api/admin/analytics', null, ADMIN_HEADERS);
+  assert(resAnalytics.status === 200 && resAnalytics.body?.data?.overview?.totalComplaints > 0,
+    'Admin institutional analytics -> 200 OK with real measured counts');
+
+  // Case 32: SLA Performance Report
+  const resSla = await request('GET', '/api/admin/sla', null, ADMIN_HEADERS);
+  assert(resSla.status === 200 && resSla.body?.data?.metrics?.complianceRate !== undefined,
+    'Admin SLA performance report -> 200 OK with SLA metrics');
+
+  // ----------------------------------------------------
   // SUMMARY
   // ----------------------------------------------------
-  console.log('\n==================================================');
-  console.log(`  TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);
-  console.log('==================================================\n');
+  console.log('\n============================================================');
+  console.log(`  FINAL RESULTS: ${passed} PASSED, ${failed} FAILED`);
+  console.log('============================================================\n');
 
-  if (failed > 0) {
-    process.exit(1);
-  }
+  return failed === 0;
 }
 
-runTests().catch((err) => {
-  console.error('Fatal error running test suite:', err);
+// Start in-process server if not listening and run tests
+let localServer = null;
+
+async function bootstrap() {
+  return new Promise((resolve, reject) => {
+    // Try binding to port 5000
+    localServer = app.listen(PORT, async () => {
+      console.log(`Test server running on port ${PORT}...`);
+      try {
+        const success = await runTests();
+        localServer.close(() => {
+          process.exit(success ? 0 : 1);
+        });
+      } catch (err) {
+        console.error('Fatal test error:', err);
+        localServer.close(() => process.exit(1));
+      }
+    });
+
+    localServer.on('error', async (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`Port ${PORT} is already in use, testing against existing server...`);
+        try {
+          const success = await runTests();
+          process.exit(success ? 0 : 1);
+        } catch (error) {
+          console.error('Fatal test error:', error);
+          process.exit(1);
+        }
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+bootstrap().catch((err) => {
+  console.error('Test bootstrap error:', err);
   process.exit(1);
 });

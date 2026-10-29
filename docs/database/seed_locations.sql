@@ -3,13 +3,21 @@
 -- Seed Buildings, Floors, and Rooms for Campus Location Selection
 -- =====================================================================
 
--- 1. Insert Buildings
+-- 1. Insert Buildings for Erode Sengunthar Engineering College, Perundurai 638057
 INSERT INTO public.buildings (id, name, code, description, latitude, longitude)
 VALUES
-    ('b1000000-0000-0000-0000-000000000001', 'Main Academic Block', 'MB', 'Primary engineering and lecture halls', 12.9715987, 77.5945627),
-    ('b1000000-0000-0000-0000-000000000002', 'Science & Research Block', 'SB', 'Laboratories, physics, chemistry & research centers', 12.9719000, 77.5948000),
-    ('b1000000-0000-0000-0000-000000000003', 'Administrative Block', 'AB', 'Dean offices, registrar, finance & student affairs', 12.9712000, 77.5942000),
-    ('b1000000-0000-0000-0000-000000000004', 'Central Library & Digital Commons', 'LB', 'Reference stacks, digital commons & study halls', 12.9714000, 77.5951000)
+    ('b1000000-0000-0000-0000-000000000001', 'Main Academic & Admin Block', 'MB', 'Principal office, administrative departments, conference hall', 11.31345, 77.55015),
+    ('b1000000-0000-0000-0000-000000000002', 'CSE, IT & MCA Computing Block', 'CSEB', 'Computer science, IT, AICTE IDEA lab, server rooms', 11.31395, 77.55065),
+    ('b1000000-0000-0000-0000-000000000003', 'Science & Humanities Block (First Year)', 'SHB', 'First year engineering classrooms, physics & chemistry labs', 11.31320, 77.55075),
+    ('b1000000-0000-0000-0000-000000000004', 'Central Library & Digital Commons', 'LIB', 'Reference stacks, digital journals, reading halls', 11.31365, 77.55095),
+    ('b1000000-0000-0000-0000-000000000005', 'ECE & EIE Block', 'ECEB', 'VLSI design, embedded systems, instrumentation labs', 11.31425, 77.55040),
+    ('b1000000-0000-0000-0000-000000000006', 'Mechanical & Robotics Engineering Block', 'MECHB', 'CAD/CAM labs, CNC workshop, machine shop', 11.31465, 77.55085),
+    ('b1000000-0000-0000-0000-000000000007', 'Civil & Agricultural Engineering Block', 'CIVILB', 'Structural testing, soil mechanics, environmental lab', 11.31445, 77.55135),
+    ('b1000000-0000-0000-0000-000000000008', 'EEE & Chemical Engineering Block', 'EEEB', 'Power electronics, electric machines, chemical reaction lab', 11.31405, 77.55125),
+    ('b1000000-0000-0000-0000-000000000009', 'Student Canteen & Food Court', 'CAN', 'Multi-cuisine cafeteria, dining hall, coin redemption counter', 11.31385, 77.54980),
+    ('b1000000-0000-0000-0000-000000000010', 'Convention Center & Auditorium', 'AUD', '1,500-seat central auditorium for seminars and cultural events', 11.31305, 77.55050),
+    ('b1000000-0000-0000-0000-000000000011', 'Sports Arena & Athletic Grounds', 'SPRT', 'Track, basketball court, badminton, fitness center', 11.31505, 77.55015),
+    ('b1000000-0000-0000-0000-000000000012', 'Diamond Hostel & Student Residences', 'HSTL', 'Student residential living quarters and recreation mess', 11.31475, 77.54925)
 ON CONFLICT (code) DO NOTHING;
 
 -- 2. Insert Floors for Main Academic Block

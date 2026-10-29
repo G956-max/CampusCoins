@@ -4,23 +4,23 @@ import LoadingSpinner from './LoadingSpinner';
 
 const variantClasses = {
   primary:
-    'bg-gradient-to-r from-campus-500 to-emerald-600 hover:from-campus-400 hover:to-emerald-500 text-slate-950 font-semibold shadow-lg shadow-campus-500/20 active:scale-[0.98]',
+    'bg-[#168451] hover:bg-[#116B42] text-white font-medium shadow-sm hover:shadow active:scale-[0.98]',
   secondary:
-    'bg-slate-800/80 hover:bg-slate-700/80 text-slate-100 border border-slate-700/60 active:scale-[0.98]',
+    'bg-[#EAF6EE] hover:bg-[#CBE7D4] text-[#168451] border border-[#E1E9E2] font-medium active:scale-[0.98]',
   brand:
-    'bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-400 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-brand-500/25 active:scale-[0.98]',
+    'bg-[#168451] hover:bg-[#116B42] text-white font-medium shadow-sm active:scale-[0.98]',
   outline:
-    'bg-transparent hover:bg-slate-800/60 text-slate-200 border border-slate-700 hover:border-slate-500 active:scale-[0.98]',
+    'bg-white hover:bg-[#F7FAF7] text-[#17211B] border border-[#E1E9E2] hover:border-[#168451] active:scale-[0.98]',
   ghost:
-    'bg-transparent hover:bg-slate-800/50 text-slate-300 hover:text-white',
+    'bg-transparent hover:bg-[#EAF6EE] text-[#647168] hover:text-[#168451]',
   danger:
-    'bg-rose-600/90 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 active:scale-[0.98]',
+    'bg-[#C43D3D] hover:bg-[#A93232] text-white font-medium shadow-sm active:scale-[0.98]',
 };
 
 const sizeClasses = {
   sm: 'px-3 py-1.5 text-xs rounded-lg gap-1.5',
   md: 'px-4 py-2 text-sm rounded-xl gap-2',
-  lg: 'px-6 py-3 text-base rounded-xl gap-2.5',
+  lg: 'px-6 py-2.5 text-base rounded-xl gap-2.5',
 };
 
 const Button = React.forwardRef(
@@ -45,7 +45,7 @@ const Button = React.forwardRef(
         type={type}
         disabled={disabled || isLoading}
         className={cn(
-          'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-campus-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
+          'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#168451]/30 focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
           variantClasses[variant] || variantClasses.primary,
           sizeClasses[size] || sizeClasses.md,
           className
@@ -54,7 +54,7 @@ const Button = React.forwardRef(
       >
         {isLoading ? (
           <>
-            <LoadingSpinner size="sm" color={variant === 'primary' ? 'text-slate-950' : 'text-current'} />
+            <LoadingSpinner size="sm" color={variant === 'outline' || variant === 'ghost' ? 'text-[#168451]' : 'text-white'} />
             <span>{children}</span>
           </>
         ) : (
@@ -70,4 +70,5 @@ const Button = React.forwardRef(
 );
 
 Button.displayName = 'Button';
+
 export default Button;

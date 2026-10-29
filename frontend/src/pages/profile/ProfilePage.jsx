@@ -17,14 +17,12 @@ import {
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import Select from '../../components/common/Select';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES, ROLE_LABELS, ROLE_BADGE_VARIANTS } from '../../constants/roles';
 import { supabase, isSupabaseConfigured } from '../../config/supabase';
@@ -40,7 +38,7 @@ const profileSchema = z.object({
 });
 
 const ProfilePage = () => {
-  const { user, profile, wallet, role, updateProfile, refreshProfile } = useAuth();
+  const { user, profile, wallet, role, updateProfile } = useAuth();
   const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -66,7 +64,6 @@ const ProfilePage = () => {
           console.warn('[Profile] Department fetch notice:', err);
         }
       } else {
-        // Fallback departments
         setDepartments([
           { id: 'dept-1', name: 'Computer Science and Engineering', code: 'CSE' },
           { id: 'dept-2', name: 'Artificial Intelligence and Machine Learning', code: 'AIML' },
@@ -141,7 +138,7 @@ const ProfilePage = () => {
   const departmentName =
     profile?.department?.name ||
     departments.find((d) => d.id === profile?.department_id)?.name ||
-    'General Campus';
+    'Computer Science and Engineering';
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto">
@@ -151,7 +148,7 @@ const ProfilePage = () => {
         subtitle="Manage your personal information, college affiliation, and campus role"
         badge={
           <Badge
-            variant={ROLE_BADGE_VARIANTS[role] || 'default'}
+            variant={ROLE_BADGE_VARIANTS[role] || 'success'}
             size="sm"
             withDot
           >
@@ -194,26 +191,26 @@ const ProfilePage = () => {
 
       {/* Alert Notices */}
       {saveSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5 animate-fadeIn">
-          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-          <span className="font-semibold">Profile updated successfully!</span>
+        <div className="p-4 rounded-xl bg-[#EAF6EE] border border-[#CBE7D4] text-[#168451] text-xs flex items-center gap-2.5 animate-fadeIn font-bold shadow-xs">
+          <CheckCircle2 size={18} className="text-[#168451] shrink-0" />
+          <span>Profile updated successfully!</span>
         </div>
       )}
 
       {saveError && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5 animate-fadeIn">
-          <AlertCircle size={18} className="text-rose-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2.5 animate-fadeIn font-semibold">
+          <AlertCircle size={18} className="text-rose-600 shrink-0" />
           <span>{saveError}</span>
         </div>
       )}
 
       {/* Profile Overview Card */}
-      <Card className="border-slate-800/80 p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-8 border-b border-slate-800/80">
+      <Card className="border-[#E1E9E2] bg-white p-6 sm:p-8 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-8 border-b border-[#E1E9E2]">
           {/* Avatar */}
           <div className="relative group shrink-0">
-            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-campus-500 to-coin-500 p-1 shadow-lg shadow-campus-500/20">
-              <div className="w-full h-full rounded-[22px] bg-slate-900 flex items-center justify-center text-3xl font-extrabold text-slate-100 overflow-hidden">
+            <div className="w-24 h-24 rounded-3xl bg-[#EAF6EE] border-2 border-[#168451] p-1 shadow-xs flex items-center justify-center">
+              <div className="w-full h-full rounded-[20px] bg-white flex items-center justify-center text-3xl font-black text-[#168451] overflow-hidden">
                 {profile?.profile_image_url ? (
                   <img
                     src={profile.profile_image_url}
@@ -228,7 +225,7 @@ const ProfilePage = () => {
               </div>
             </div>
             {isEditing && (
-              <div className="absolute inset-0 rounded-3xl bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="absolute inset-0 rounded-3xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 <Camera size={20} className="text-white" />
               </div>
             )}
@@ -237,11 +234,11 @@ const ProfilePage = () => {
           {/* User Details */}
           <div className="space-y-2 text-center sm:text-left flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-              <h2 className="text-2xl font-black text-white tracking-tight">
+              <h2 className="text-2xl font-black text-[#17211B] tracking-tight">
                 {profile?.full_name || profile?.name || 'Campus Member'}
               </h2>
               <Badge
-                variant={ROLE_BADGE_VARIANTS[role] || 'default'}
+                variant={ROLE_BADGE_VARIANTS[role] || 'success'}
                 size="sm"
                 withDot
               >
@@ -249,30 +246,30 @@ const ProfilePage = () => {
               </Badge>
             </div>
 
-            <p className="text-xs text-slate-400 font-mono">
+            <p className="text-xs text-[#647168] font-mono">
               {profile?.email || user?.email || 'user@campus.edu'}
             </p>
 
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-2 text-xs text-slate-300">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-2 text-xs text-[#17211B]">
               <div className="flex items-center gap-1.5">
-                <Building2 size={14} className="text-slate-500" />
-                <span>{departmentName}</span>
+                <Building2 size={14} className="text-[#168451]" />
+                <span className="font-semibold">{departmentName}</span>
               </div>
               {role === ROLES.STUDENT && (
                 <div className="flex items-center gap-1.5">
-                  <Hash size={14} className="text-slate-500" />
+                  <Hash size={14} className="text-[#647168]" />
                   <span>ID: {profile?.student_id || 'STU-2024-8842'}</span>
                 </div>
               )}
               {role === ROLES.STAFF && (
                 <div className="flex items-center gap-1.5">
-                  <Shield size={14} className="text-slate-500" />
+                  <Shield size={14} className="text-sky-700" />
                   <span>Staff ID: {profile?.staff_id || 'STF-402'}</span>
                 </div>
               )}
               {role === ROLES.STUDENT && (
-                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-semibold">
-                  <Coins size={12} className="text-coin-400" />
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4] font-bold">
+                  <Coins size={12} className="text-[#168451]" />
                   <span>{wallet?.balance ?? 0} Coins</span>
                 </div>
               )}
@@ -284,7 +281,7 @@ const ProfilePage = () => {
         <div className="pt-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Full Name (Safe Editable) */}
+              {/* Full Name */}
               <Input
                 label="Full Name"
                 disabled={!isEditing}
@@ -292,7 +289,7 @@ const ProfilePage = () => {
                 {...register('full_name')}
               />
 
-              {/* Email Address (Immutable Security Field) */}
+              {/* Email Address */}
               <Input
                 label="College Email (Immutable)"
                 value={profile?.email || user?.email || ''}
@@ -301,26 +298,26 @@ const ProfilePage = () => {
                 leftIcon={<Mail size={16} />}
               />
 
-              {/* Department (Safe Editable from available list) */}
+              {/* Department */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold tracking-wider text-slate-300 uppercase">
+                <label className="block text-xs font-bold tracking-wider text-[#17211B] uppercase">
                   Academic Department
                 </label>
                 <select
                   disabled={!isEditing}
-                  className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:border-campus-500"
+                  className="w-full bg-white border border-[#E1E9E2] rounded-xl px-3.5 py-2.5 text-sm text-[#17211B] disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:border-[#168451]"
                   {...register('department_id')}
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id} className="bg-slate-900">
+                    <option key={dept.id} value={dept.id}>
                       {dept.name} ({dept.code})
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Phone (Safe Editable) */}
+              {/* Phone */}
               <Input
                 label="Phone Contact"
                 placeholder="+1 (555) 000-0000"
@@ -330,7 +327,7 @@ const ProfilePage = () => {
                 {...register('phone')}
               />
 
-              {/* Year (Safe Editable for students) */}
+              {/* Year */}
               {role === ROLES.STUDENT && (
                 <Input
                   label="Academic Year"
@@ -342,7 +339,7 @@ const ProfilePage = () => {
                 />
               )}
 
-              {/* Section (Safe Editable for students) */}
+              {/* Section */}
               {role === ROLES.STUDENT && (
                 <Input
                   label="Class Section"
@@ -354,7 +351,7 @@ const ProfilePage = () => {
                 />
               )}
 
-              {/* Profile Image URL (Safe Editable) */}
+              {/* Profile Image URL */}
               <div className="md:col-span-2">
                 <Input
                   label="Profile Image URL"
@@ -366,12 +363,12 @@ const ProfilePage = () => {
                 />
               </div>
 
-              {/* Immutable System Fields Notice */}
-              <div className="md:col-span-2 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-start gap-2.5 text-xs text-slate-400">
-                <Shield size={16} className="text-slate-500 shrink-0 mt-0.5" />
+              {/* Immutable Security Notice */}
+              <div className="md:col-span-2 p-3.5 rounded-2xl bg-[#EAF6EE] border border-[#CBE7D4] flex items-start gap-2.5 text-xs text-[#17211B]">
+                <Shield size={16} className="text-[#168451] shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold text-slate-300 block">Security Policy:</span>
-                  User role (<span className="text-campus-400 uppercase font-mono">{role}</span>), account UUID,
+                  <span className="font-bold text-[#168451] block">Security Policy:</span>
+                  User role (<span className="text-[#168451] uppercase font-mono font-bold">{role}</span>), account UUID,
                   and verified college email are cryptographically locked and can only be altered by a campus system administrator.
                 </div>
               </div>
@@ -379,7 +376,7 @@ const ProfilePage = () => {
 
             {/* Save Button Bar */}
             {isEditing && (
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E1E9E2]">
                 <Button
                   type="button"
                   variant="outline"

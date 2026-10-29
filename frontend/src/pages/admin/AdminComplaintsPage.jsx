@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShieldAlert,
   Search,
-  Filter,
   CheckCircle2,
   Clock,
   UserCheck,
   ChevronRight,
   MapPin,
   RefreshCw,
-  Eye,
   AlertTriangle,
   User,
   SlidersHorizontal,
@@ -45,7 +43,8 @@ const AdminComplaintsPage = () => {
     setError(null);
     try {
       const res = await complaintApi.getAllComplaints();
-      setComplaints(res.data || []);
+      const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      setComplaints(list);
     } catch (err) {
       console.error('Failed to load admin complaints:', err);
       setError(err.response?.data?.message || 'Failed to load complaints.');
@@ -130,14 +129,14 @@ const AdminComplaintsPage = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto">
       {/* Header */}
       <PageHeader
         title="Complaints Management & Dispatch"
         subtitle="Review, prioritize, dispatch technicians, and audit all university facilities tickets."
         badge={
-          <Badge variant="indigo" size="sm" withDot>
-            Admin Central Console
+          <Badge variant="success" size="sm" withDot>
+            Central Dispatch Live
           </Badge>
         }
         actions={
@@ -157,77 +156,77 @@ const AdminComplaintsPage = () => {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div
           onClick={() => setStatusFilter('all')}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === 'all'
-              ? 'bg-slate-900 border-indigo-500/50 shadow-md shadow-indigo-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-[#EAF6EE] border-[#168451] text-[#168451]'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-[#168451]/40'
           }`}
         >
-          <div className="text-xs text-slate-400">Total System Tickets</div>
-          <div className="text-xl font-bold text-white mt-1">{stats.total}</div>
+          <div className="text-xs text-[#647168] font-medium">Total System Tickets</div>
+          <div className="text-xl font-black mt-1">{stats.total}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.SUBMITTED)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.SUBMITTED
-              ? 'bg-slate-900 border-sky-500/50 shadow-md shadow-sky-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-sky-50 border-sky-600 text-sky-800'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-sky-300'
           }`}
         >
-          <div className="text-xs text-sky-400">Needs Review</div>
-          <div className="text-xl font-bold text-sky-400 mt-1">{stats.pendingReview}</div>
+          <div className="text-xs text-sky-700 font-bold">Needs Review</div>
+          <div className="text-xl font-black text-sky-700 mt-1">{stats.pendingReview}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.IN_PROGRESS)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.IN_PROGRESS
-              ? 'bg-slate-900 border-amber-500/50 shadow-md shadow-amber-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-amber-50 border-amber-600 text-amber-800'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-amber-300'
           }`}
         >
-          <div className="text-xs text-amber-400">In Progress</div>
-          <div className="text-xl font-bold text-amber-400 mt-1">{stats.inProgress}</div>
+          <div className="text-xs text-amber-700 font-bold">In Progress</div>
+          <div className="text-xl font-black text-amber-700 mt-1">{stats.inProgress}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.RESOLVED)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.RESOLVED
-              ? 'bg-slate-900 border-emerald-500/50 shadow-md shadow-emerald-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-[#EAF6EE] border-[#168451] text-[#168451]'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-[#168451]/40'
           }`}
         >
-          <div className="text-xs text-emerald-400">Resolved / Closed</div>
-          <div className="text-xl font-bold text-emerald-400 mt-1">{stats.resolved}</div>
+          <div className="text-xs text-[#168451] font-bold">Resolved / Closed</div>
+          <div className="text-xl font-black text-[#168451] mt-1">{stats.resolved}</div>
         </div>
 
         <div
           onClick={() => setStatusFilter(COMPLAINT_STATUSES.REJECTED)}
-          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
             statusFilter === COMPLAINT_STATUSES.REJECTED
-              ? 'bg-slate-900 border-rose-500/50 shadow-md shadow-rose-500/10'
-              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+              ? 'bg-rose-50 border-rose-600 text-rose-800'
+              : 'bg-white border-[#E1E9E2] text-[#17211B] hover:border-rose-300'
           }`}
         >
-          <div className="text-xs text-rose-400">Rejected</div>
-          <div className="text-xl font-bold text-rose-400 mt-1">{stats.rejected}</div>
+          <div className="text-xs text-rose-700 font-bold">Rejected</div>
+          <div className="text-xl font-black text-rose-700 mt-1">{stats.rejected}</div>
         </div>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm space-y-3">
+      <div className="p-4 rounded-2xl bg-white border border-[#E1E9E2] shadow-xs space-y-3">
         <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#647168]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by ID, title, student, technician..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] placeholder-[#647168] focus:outline-none focus:border-[#168451]"
             />
           </div>
 
@@ -237,7 +236,7 @@ const AdminComplaintsPage = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="all">All Statuses</option>
               <option value="submitted">Submitted</option>
@@ -254,12 +253,12 @@ const AdminComplaintsPage = () => {
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="all">All Priorities</option>
               {COMPLAINT_PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>
-                  {p.label}
+                  {p.label} Priority
                 </option>
               ))}
             </select>
@@ -268,25 +267,25 @@ const AdminComplaintsPage = () => {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
               <option value="all">All Categories</option>
-              {COMPLAINT_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {COMPLAINT_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
                 </option>
               ))}
             </select>
 
-            {/* Assignment */}
+            {/* Technician Assignment */}
             <select
               value={assignedFilter}
               onChange={(e) => setAssignedFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-none focus:border-[#168451]"
             >
-              <option value="all">All Assignment States</option>
+              <option value="all">Assignment: All</option>
+              <option value="assigned">Technician Assigned</option>
               <option value="unassigned">Unassigned Only</option>
-              <option value="assigned">Assigned Only</option>
             </select>
           </div>
         </div>
@@ -294,10 +293,10 @@ const AdminComplaintsPage = () => {
 
       {/* Error state */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/80 text-rose-300 flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle size={18} />
-            <span className="text-sm">{error}</span>
+            <span className="text-sm font-medium">{error}</span>
           </div>
           <Button variant="outline" size="sm" onClick={fetchAdminComplaints}>
             Retry
@@ -305,116 +304,109 @@ const AdminComplaintsPage = () => {
         </div>
       )}
 
-      {/* Data Table */}
+      {/* Complaints List */}
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((n) => (
             <div
               key={n}
-              className="h-16 rounded-xl bg-slate-900/50 border border-slate-800/80 animate-pulse"
+              className="h-28 rounded-2xl bg-white border border-[#E1E9E2] animate-pulse"
             />
           ))}
         </div>
       ) : filteredComplaints.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-3">
-          <ShieldAlert size={28} className="text-slate-500 mx-auto" />
-          <h3 className="text-base font-semibold text-slate-200">No Complaints Match</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Try adjusting your search query or filter selectors above.
-          </p>
+        <div className="p-12 text-center rounded-2xl bg-white border border-[#E1E9E2] shadow-xs space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4] flex items-center justify-center">
+            <ShieldAlert size={24} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-[#17211B]">No matching tickets</h3>
+            <p className="text-xs text-[#647168] mt-1 max-w-md mx-auto">
+              No campus complaints match your active search and filter settings.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-4">Ticket</th>
-                <th className="py-3 px-4">Issue & Category</th>
-                <th className="py-3 px-4">Priority</th>
-                <th className="py-3 px-4">Location</th>
-                <th className="py-3 px-4">Student</th>
-                <th className="py-3 px-4">Technician</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {filteredComplaints.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-slate-800/40 transition-colors group cursor-pointer"
-                  onClick={() => navigate(`/admin/complaints/${item.id}`)}
-                >
-                  {/* Tracking Code */}
-                  <td className="py-3 px-4 font-mono font-bold text-indigo-400">
-                    {item.tracking_code || item.id?.slice(0, 8)}
-                  </td>
+        <div className="space-y-3">
+          {filteredComplaints.map((item) => {
+            const isUnassigned = !item.assigned_to;
+            const isSubmitted = item.status === COMPLAINT_STATUSES.SUBMITTED;
 
-                  {/* Title & Category */}
-                  <td className="py-3 px-4 max-w-xs">
-                    <div className="font-semibold text-slate-200 truncate group-hover:text-indigo-400 transition-colors">
-                      {item.title}
-                    </div>
-                    <span className="text-[11px] text-slate-400">{item.category}</span>
-                  </td>
-
-                  {/* Priority */}
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <PriorityBadge priority={item.priority} size="sm" />
-                  </td>
-
-                  {/* Location */}
-                  <td className="py-3 px-4 max-w-[180px] truncate text-slate-400">
-                    {getLocationString(item)}
-                  </td>
-
-                  {/* Student */}
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="font-medium text-slate-200">
-                      {item.student?.full_name || 'Student'}
-                    </div>
-                  </td>
-
-                  {/* Technician */}
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    {item.assigned_staff?.full_name ? (
-                      <span className="text-slate-300 font-medium">
-                        {item.assigned_staff.full_name}
+            return (
+              <div
+                key={item.id}
+                onClick={() => navigate(`/admin/complaints/${item.id}`)}
+                className={`group p-5 rounded-2xl border transition-all cursor-pointer shadow-xs ${
+                  isSubmitted
+                    ? 'bg-sky-50/40 border-sky-200 hover:border-sky-400'
+                    : 'bg-white border-[#E1E9E2] hover:border-[#168451]/50'
+                }`}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* Left Badges & Title */}
+                  <div className="space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-[#647168] bg-[#F7FAF7] px-2 py-0.5 rounded border border-[#E1E9E2]">
+                        {item.tracking_code || item.id?.slice(0, 8)}
                       </span>
-                    ) : (
-                      <span className="text-amber-400/80 font-medium italic">Unassigned</span>
-                    )}
-                  </td>
+                      <span className="text-xs font-medium text-[#17211B] bg-white border border-[#E1E9E2] px-2 py-0.5 rounded">
+                        {item.category}
+                      </span>
+                      <PriorityBadge priority={item.priority} size="sm" />
+                      <ComplaintStatusBadge status={item.status} size="sm" />
 
-                  {/* Status */}
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <ComplaintStatusBadge status={item.status} size="sm" />
-                  </td>
+                      {isUnassigned && !['resolved', 'verified', 'rejected'].includes(item.status) && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          Unassigned
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Date */}
-                  <td className="py-3 px-4 whitespace-nowrap text-slate-500 font-mono text-[11px]">
-                    {formatDate(item.created_at)}
-                  </td>
+                    <h3 className="text-base font-bold text-[#17211B] group-hover:text-[#168451] transition-colors">
+                      {item.title}
+                    </h3>
 
-                  {/* Action */}
-                  <td className="py-3 px-4 text-right whitespace-nowrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/admin/complaints/${item.id}`);
-                      }}
-                      className="text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10"
-                    >
-                      Manage
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <p className="text-xs text-[#647168] line-clamp-2 max-w-3xl leading-relaxed">
+                      {item.description}
+                    </p>
+
+                    {/* Metadata Footer */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-[#647168] pt-1">
+                      <span className="flex items-center gap-1.5">
+                        <User size={13} className="text-[#168451]" />
+                        <span>Student: {item.student?.full_name || 'Anonymous Student'}</span>
+                      </span>
+
+                      <span className="flex items-center gap-1.5">
+                        <MapPin size={13} className="text-[#168451]" />
+                        <span>{getLocationString(item)}</span>
+                      </span>
+
+                      <span className="flex items-center gap-1.5">
+                        <Clock size={13} className="text-[#647168]" />
+                        <span>Reported {formatDate(item.created_at)}</span>
+                      </span>
+
+                      {item.assigned_staff && (
+                        <span className="flex items-center gap-1.5 text-sky-800 font-bold">
+                          <UserCheck size={13} />
+                          <span>Tech: {item.assigned_staff.full_name}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right View Arrow */}
+                  <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                    <span className="text-xs font-bold text-[#168451] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                      Manage & Dispatch
+                      <ChevronRight size={16} />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -9,13 +9,19 @@ node_modules/
 # Production
 /dist
 /build
+frontend/dist/
 
 # Environment Variables
 .env
+.env.*
+*.env
+**/.env
+**/.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+!**/.env.example
 
 # Logs
 npm-debug.log*
@@ -37,6 +43,7 @@ lerna-debug.log*
 Thumbs.db
 
 # Temporary & Cache
+.expo/
 .cache/
 .vite/
 .temp/

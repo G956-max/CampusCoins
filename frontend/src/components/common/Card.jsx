@@ -11,9 +11,9 @@ export const Card = ({
   return (
     <div
       className={cn(
-        'rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 shadow-glass overflow-hidden',
-        hover && 'transition-all duration-250 hover:border-slate-700/80 hover:bg-slate-900/80 hover:shadow-lg hover:-translate-y-0.5',
-        gradient && 'relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-campus-500/5 before:via-transparent before:to-brand-500/5 before:pointer-events-none',
+        'rounded-2xl bg-white border border-[#E1E9E2] shadow-sm overflow-hidden text-[#17211B]',
+        hover && 'transition-all duration-200 hover:border-[#168451] hover:shadow-md hover:-translate-y-0.5',
+        gradient && 'relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-[#168451]/5 before:via-transparent before:to-[#EAF6EE]/30 before:pointer-events-none',
         className
       )}
       {...props}
@@ -26,7 +26,7 @@ export const Card = ({
 export const CardHeader = ({ children, className, ...props }) => {
   return (
     <div
-      className={cn('p-5 pb-3 border-b border-slate-800/60 flex flex-col gap-1', className)}
+      className={cn('p-5 pb-3 border-b border-[#E1E9E2] flex flex-col gap-1', className)}
       {...props}
     >
       {children}
@@ -37,7 +37,7 @@ export const CardHeader = ({ children, className, ...props }) => {
 export const CardTitle = ({ children, className, ...props }) => {
   return (
     <h3
-      className={cn('text-base font-semibold text-slate-100 tracking-tight flex items-center gap-2', className)}
+      className={cn('text-base font-semibold text-[#17211B] tracking-tight flex items-center gap-2', className)}
       {...props}
     >
       {children}
@@ -48,7 +48,7 @@ export const CardTitle = ({ children, className, ...props }) => {
 export const CardDescription = ({ children, className, ...props }) => {
   return (
     <p
-      className={cn('text-xs text-slate-400 font-normal leading-relaxed', className)}
+      className={cn('text-xs text-[#647168] font-normal leading-relaxed', className)}
       {...props}
     >
       {children}
@@ -67,7 +67,7 @@ export const CardContent = ({ children, className, ...props }) => {
 export const CardFooter = ({ children, className, ...props }) => {
   return (
     <div
-      className={cn('p-4 pt-3 border-t border-slate-800/60 flex items-center justify-between bg-slate-950/20', className)}
+      className={cn('p-4 pt-3 border-t border-[#E1E9E2] flex items-center justify-between bg-[#F7FAF7]/80', className)}
       {...props}
     >
       {children}

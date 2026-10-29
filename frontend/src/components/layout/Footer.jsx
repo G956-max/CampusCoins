@@ -1,106 +1,93 @@
 import React from 'react';
-import { Coins, Heart, Github, ExternalLink } from 'lucide-react';
+import { Coins, Heart } from 'lucide-react';
 import Badge from '../common/Badge';
 
 const Footer = () => {
   return (
-    <footer className="w-full bg-slate-950 border-t border-slate-900 text-slate-400 py-12 px-4 sm:px-6 lg:px-8">
+    <footer className="w-full bg-white border-t border-[#E1E9E2] text-[#647168] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           {/* Col 1: Brand & Tagline */}
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-campus-500 to-coin-500 flex items-center justify-center text-slate-950 shadow-md">
-                <Coins size={20} className="stroke-[2.5]" />
+          <div className="md:col-span-2 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#168451] flex items-center justify-center text-white shadow-xs">
+                <Coins size={18} className="stroke-[2.5]" />
               </div>
-              <span className="text-xl font-bold text-white tracking-tight">
-                Campus<span className="text-campus-400">Coins</span>
+              <span className="text-lg font-bold text-[#17211B] tracking-tight">
+                Campus<span className="text-[#168451]">Coins</span>
               </span>
             </div>
-            <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-              Empowering college campuses through decentralized student civic engagement.
-              Report infrastructure defects, track maintenance resolution, and earn verifiable
-              CampusCoins.
+            <p className="text-sm text-[#647168] max-w-md leading-relaxed">
+              Empowering campus infrastructure maintenance through student civic engagement.
+              Report defects, track department resolution, and earn verifiable CampusCoin rewards.
             </p>
             <div className="flex items-center gap-2 pt-1">
-              <Badge variant="gold" size="sm" withDot>
-                Phase 1 Active: Foundation
+              <Badge variant="success" size="sm" withDot>
+                Enterprise Campus SaaS
               </Badge>
-              <Badge variant="purple" size="sm">
-                Next: Phase 2 Supabase
+              <Badge variant="default" size="sm">
+                Real-Time Maintenance SLA
               </Badge>
             </div>
           </div>
 
           {/* Col 2: Navigation */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-4">
+            <h4 className="text-xs font-semibold text-[#17211B] uppercase tracking-wider mb-3">
               Platform
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-sm">
               <li>
-                <a href="#features" className="hover:text-campus-400 transition-colors">
+                <a href="/#features" className="hover:text-[#168451] transition-colors">
                   Key Features
                 </a>
               </li>
               <li>
-                <a href="#how-it-works" className="hover:text-campus-400 transition-colors">
+                <a href="/#how-it-works" className="hover:text-[#168451] transition-colors">
                   How It Works
                 </a>
               </li>
               <li>
-                <a href="#about" className="hover:text-campus-400 transition-colors">
-                  Our Mission
+                <a href="/#about" className="hover:text-[#168451] transition-colors">
+                  Civic Mission
                 </a>
               </li>
               <li>
-                <a href="/login" className="hover:text-campus-400 transition-colors">
-                  Student & Staff Portal
+                <a href="/login" className="hover:text-[#168451] transition-colors">
+                  Campus Login
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Col 3: Architecture & Resources */}
+          {/* Col 3: Modules */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-4">
-              Developer & Specs
+            <h4 className="text-xs font-semibold text-[#17211B] uppercase tracking-wider mb-3">
+              Features
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-sm">
               <li>
-                <span className="text-slate-300">API Health:</span>{' '}
-                <a
-                  href="http://localhost:5000/api/health"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-campus-400 hover:underline inline-flex items-center gap-1"
-                >
-                  /api/health <ExternalLink size={12} />
-                </a>
+                <span className="text-[#647168]">Coin Transaction Ledger</span>
               </li>
               <li>
-                <span className="text-slate-500">FastAPI AI: Phase 3</span>
+                <span className="text-[#647168]">Single-Use QR Vouchers</span>
               </li>
               <li>
-                <span className="text-slate-500">Navigation: Phase 4</span>
+                <span className="text-[#647168]">Interactive Campus Map</span>
               </li>
               <li>
-                <span className="text-slate-500">Token Ledger: Phase 5</span>
+                <span className="text-[#647168]">Smart Duplicate Detection</span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>
-            &copy; {new Date().getFullYear()} CampusCoins &bull; Report. Resolve. Earn. Improve.
+        {/* Bottom copyright */}
+        <div className="pt-6 border-t border-[#E1E9E2] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#647168]">
+          <p>&copy; {new Date().getFullYear()} CampusCoins Infrastructure Initiative. All rights reserved.</p>
+          <p className="flex items-center gap-1">
+            Built for civic impact and campus improvement
           </p>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-400">Built with React, Vite & Express</span>
-            <span className="w-1 h-1 rounded-full bg-slate-700" />
-            <span className="text-slate-400">Dark Glassmorphism Architecture</span>
-          </div>
         </div>
       </div>
     </footer>

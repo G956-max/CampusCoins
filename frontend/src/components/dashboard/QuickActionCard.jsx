@@ -23,34 +23,34 @@ const QuickActionCard = ({
         }
       }}
       className={cn(
-        'group cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-campus-500/40 rounded-2xl',
+        'group cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-[#168451]/30 rounded-2xl',
         className
       )}
     >
       <Card
         hover
-        className="p-5 h-full flex flex-col justify-between border-slate-800/80 group-hover:border-slate-700/80 transition-all"
+        className="p-5 h-full flex flex-col justify-between border-[#E1E9E2] group-hover:border-[#168451] transition-all bg-white"
       >
         <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="w-11 h-11 rounded-xl bg-slate-800/90 border border-slate-700 flex items-center justify-center text-campus-400 group-hover:scale-110 group-hover:bg-campus-500/10 group-hover:border-campus-500/30 transition-all">
-            <Icon size={22} />
+          <div className="w-11 h-11 rounded-xl bg-[#EAF6EE] border border-[#CBE7D4] flex items-center justify-center text-[#168451] group-hover:scale-105 group-hover:bg-[#168451] group-hover:text-white transition-all shadow-sm">
+            <Icon size={20} />
           </div>
           {badge && (
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[#EAF6EE] text-[#168451] border border-[#CBE7D4]">
               {badge}
             </span>
           )}
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-slate-100 group-hover:text-campus-400 transition-colors flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-[#17211B] group-hover:text-[#168451] transition-colors flex items-center justify-between">
             {title}
             <ChevronRight
               size={16}
-              className="text-slate-500 group-hover:text-campus-400 group-hover:translate-x-0.5 transition-all"
+              className="text-[#647168] group-hover:text-[#168451] group-hover:translate-x-0.5 transition-all"
             />
           </h4>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+          <p className="text-xs text-[#647168] mt-1 leading-relaxed">
             {description}
           </p>
         </div>

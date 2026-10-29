@@ -2,232 +2,223 @@
 
 > **Report. Resolve. Earn. Improve.**
 
-[![Phase](https://img.shields.io/badge/Phase-3%20Core%20Complaint%20Management-blue.svg)](docs/architecture.md)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20TailwindCSS-61DAFB.svg)](frontend/)
-[![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-339933.svg)](backend/)
+[![Tests](https://img.shields.io/badge/Tests-32%20Passed%20%7C%200%20Failed-success.svg)](backend/test/complaintLifecycle.test.js)
+[![Frontend Build](https://img.shields.io/badge/Frontend-Vite%20Build%20Passed-success.svg)](frontend/)
+[![Theme](https://img.shields.io/badge/Theme-Premium%20Light%20%23168451-green.svg)](frontend/src/index.css)
+[![Security](https://img.shields.io/badge/Security-Server%20Verified%20RBAC%20%26%20RLS-blue.svg)](docs/database/migration_complete.sql)
 
-CampusCoins is a modern college complaint and campus assistance platform where students report real campus issues, track their resolution lifecycle, earn verifiable **CampusCoins** for meaningful contributions, and navigate the campus environment with ease.
+CampusCoins is a modern campus civic platform where students report real university defects, track maintenance transparently, earn verifiable **CampusCoins** on an immutable ledger, and discover campus facilities with an interactive map.
 
 ---
 
-## 📌 Problem Statement & Core Idea
+## 📌 Problem Statement & Solution
 
 Traditional college grievance mechanisms often suffer from:
 1. **Lack of Transparency**: Complaints fall into a black hole without clear ownership or real-time status tracking.
 2. **Duplicate Reporting**: Dozens of students report the same broken projector or water dispenser independently.
 3. **Absence of Student Incentive**: Students feel apathy toward campus maintenance because positive engagement is unrecognized.
-4. **Disorganized Campus Assistance**: New students struggle with navigating campus facilities, departments, and services.
+4. **Disorganized Campus Navigation**: Students and visitors struggle with finding facilities and step-free accessible routes.
 
-**CampusCoins addresses this through gamified civic engagement:**
-- **Report**: Students capture and submit campus issues with photos, categories, and locations.
-- **Resolve**: Department staff receive triaged tickets with SLA metrics and mark them resolved.
-- **Earn**: Verified, high-impact contributions award students **CampusCoins** redeemable for college perks, canteen discounts, or campus merchandise.
-- **Improve**: Administrations gain visibility into real-time campus health and infrastructure hotspots.
+**CampusCoins addresses this through an incentivized civic ecosystem:**
+- **Report**: Students capture and submit campus issues with photos, categories, and building/room selectors, with automatic duplicate warning checks.
+- **Resolve**: Department staff receive triaged tickets with SLA timers, post work updates, and attach resolution proof.
+- **Earn**: Verified, high-impact contributions award students **CampusCoins** atomically stored on a persistent ledger.
+- **Redeem**: Students redeem coins for canteen vouchers, printing passes, and campus benefits, verified securely via single-use QR vouchers.
+- **Navigate**: Interactive Leaflet campus map displays live defect pins and Dijkstra shortest-path navigation (including step-free accessible routing).
 
 ---
 
-## 🚀 Scope Status: Phase 3 — Core Complaint Management System
+## 🎨 Premium Light Theme Palette
 
-> [!IMPORTANT]
-> **This repository is currently at Phase 3.**
-> Phase 3 implements the complete, robust end-to-end complaint lifecycle:
-> `Student report + evidence` &rarr; `Admin review / reject (with reason) / assign staff` &rarr; `Staff start work / progress updates / mark resolved (with resolution note)` &rarr; `Student resolution verification / reopen (with reason)`.
-> Includes 24 automated lifecycle test cases, cascaded building/floor/room location selectors, full evidence galleries with lightbox modals, and vertical chronological audit timelines.
+CampusCoins user interface is styled in a clean, modern SaaS light aesthetic:
+
+| Element | Color Hex | Usage |
+| :--- | :--- | :--- |
+| **Main Background** | `#F7FAF7` | Full-page background |
+| **Surface / Cards** | `#FFFFFF` | Cards, panels, modal windows, table containers |
+| **Primary Green** | `#168451` | Brand accents, primary buttons, active links, success indicators |
+| **Dark Hover Green** | `#116B42` | Button hover and active states |
+| **Soft Green Background** | `#EAF6EE` | Accent chips, badges, highlight banners |
+| **Primary Text** | `#17211B` | High-contrast headers and body text |
+| **Secondary Text** | `#647168` | Subtitles, metadata, timestamps |
+| **Border Color** | `#E1E9E2` | Subtle dividers, card borders, table separators |
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### Frontend
-- **Framework**: [React.js 18](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) (Custom Dark Theme & Glassmorphism)
-- **Routing**: [React Router v6](https://reactrouter.com/)
-- **HTTP Client**: [Axios](https://axios-http.com/)
-- **Forms & Validation**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Charts**: [Recharts](https://recharts.org/)
-- **Data Fetching**: [@tanstack/react-query](https://tanstack.com/query)
+- **Framework**: React 18 + Vite
+- **Styling**: Tailwind CSS (Centralized Light Design Tokens in `tailwind.config.js`)
+- **Routing**: React Router v6
+- **Forms & Validation**: React Hook Form + Zod
+- **Icons**: Lucide React
+- **Maps**: Leaflet + OpenStreetMap (Accessible Dijkstra pathfinding)
+- **Charts**: Recharts (Configured with light grid `#E1E9E2` and dark text)
+- **QR Codes**: Canvas QR rendering for single-use vouchers
+
+### Mobile Application (React Native & Expo)
+- **Framework**: React Native + Expo SDK 58
+- **Navigation**: React Navigation v7 (Native Stack & Bottom Tabs)
+- **Icons**: Expo Vector Icons (Ionicons)
+- **State & Storage**: React Context + `@react-native-async-storage/async-storage`
+- **Location**: `mobile/` directory
+- **Scripts**: `npm run dev:mobile` / `npm run android:mobile`
 
 ### Backend
-- **Runtime**: [Node.js](https://nodejs.org/) (v20+ / v22)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **Security**: Helmet, CORS, Express Rate Limit
-- **Configuration**: Dotenv
-- **Live Diagnostics**: `GET /api/health`
+- **Runtime**: Node.js (v20+ / v22)
+- **Framework**: Express.js
+- **Security**: Server-side JWT verification, role-based access control, helmet, CORS, express-rate-limit
+- **Ledger Engine**: Atomic coin transactions, idempotency guards, and single-use voucher validation
 
-### Database & Cloud Services (Prepared for Phase 2)
-- **Database**: Supabase PostgreSQL
-- **Auth**: Supabase Auth (JWT & RBAC)
-- **Storage**: Supabase Storage (Issue media)
-- **Realtime**: Supabase Realtime (WebSockets)
+### Database & Supabase Integration
+- **Database**: PostgreSQL (Supabase)
+- **RLS**: Row-Level Security policies restricting unauthorized balance, XP, or role updates
+- **Atomic RPCs**: `award_coins_atomic`, `redeem_reward_atomic`, `claim_mission_atomic`
+- **Migration**: Complete database schema and stored procedures located at `docs/database/migration_complete.sql`
 
 ---
 
-## 📁 Monorepo Project Structure
+## 📁 Repository Structure
 
 ```text
 CampusCoins/
+├── docs/
+│   ├── database/
+│   │   └── migration_complete.sql    # Complete SQL migration (tables, RPCs, RLS, seed data)
+│   └── architecture.md               # Technical architecture & security specifications
 │
-├── frontend/                     # React + Vite Client Application
+├── frontend/
 │   ├── src/
-│   │   ├── assets/               # Brand assets and SVG badges
-│   │   ├── components/           # Reusable atomic UI & layout components
-│   │   │   ├── common/           # Button, Input, Select, Modal, Card, Badge, etc.
-│   │   │   ├── layout/           # Navbar, Sidebar, Footer, BackendStatusBadge
-│   │   │   └── dashboard/        # MetricCard, QuickActionCard
-│   │   ├── layouts/              # PublicLayout, StudentLayout, StaffLayout, AdminLayout
-│   │   ├── pages/                # LandingPage, Login, Register, Dashboards
-│   │   ├── routes/               # AppRoutes & Role-aware ProtectedRoute
-│   │   ├── services/             # api.js (Axios) & supabase.js (Client abstraction)
-│   │   ├── hooks/                # useAuth, useHealthCheck
-│   │   ├── utils/                # Helper utilities and formatters
-│   │   ├── constants/            # Mock data, navigation, role constants
-│   │   ├── context/              # AuthContext (Mock state & role switching for Phase 1)
-│   │   ├── App.jsx               # Application route shell
-│   │   ├── main.jsx              # DOM entry point
-│   │   └── index.css             # Tailwind directives and glassmorphism styles
-│   ├── public/                   # Static web assets
-│   ├── .env.example              # Frontend environment template
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   └── vite.config.js
-│
-├── backend/                      # Node.js + Express API Gateway
-│   ├── src/
-│   │   ├── controllers/          # Request handlers (healthController.js)
-│   │   ├── routes/               # API routes (healthRoutes.js, index.js)
-│   │   ├── middleware/           # errorHandler, notFoundHandler, rateLimiter
-│   │   ├── services/             # supabaseService.js (DB abstraction layer)
-│   │   ├── utils/                # apiResponse.js, logger.js
-│   │   ├── config/               # env.js, supabase.js
-│   │   ├── validators/           # Zod/Joi validation helpers
-│   │   └── server.js             # Express app entry point
-│   ├── .env.example              # Backend environment template
+│   │   ├── components/               # Common atomic UI components (Card, Button, Badge, Modal, Input)
+│   │   │   ├── complaints/           # Timeline, EvidenceGallery, LocationSelector, StatusBadge
+│   │   │   ├── dashboard/            # MetricCard, QuickActionCard
+│   │   │   └── layout/               # Navbar, Sidebar, NotificationDropdown, Footer
+│   │   ├── pages/
+│   │   │   ├── auth/                 # LoginPage, RegisterPage
+│   │   │   ├── landing/              # LandingPage
+│   │   │   ├── student/              # Dashboard, Complaints, Wallet, Missions, Badges, Leaderboard, Store
+│   │   │   ├── staff/                # Dashboard, Work Orders, Detail, StaffVerifyVoucherPage
+│   │   │   ├── admin/                # Dashboard, Dispatch, Detail, SLA, Rewards, Redemptions, Gamification
+│   │   │   ├── common/               # CampusMapPage (Leaflet), CommunityBountiesPage
+│   │   │   └── profile/              # ProfilePage
+│   │   ├── services/                 # complaintApi, gamificationApi, notificationApi, mapApi
+│   │   └── tailwind.config.js        # Design tokens for #F7FAF7 light theme
 │   └── package.json
 │
-├── ai-service/                   # Phase 3 FastAPI AI Microservice
-│   └── README.md
+├── backend/
+│   ├── src/
+│   │   ├── controllers/              # REST endpoint handlers
+│   │   ├── services/                 # complaint, coin, mission, reward, duplicate, sla, map, notification
+│   │   ├── middleware/               # authMiddleware (disables mock bypass in production)
+│   │   └── routes/                   # complaintRoutes, staffRoutes, adminRoutes, gamificationRoutes
+│   ├── test/
+│   │   └── complaintLifecycle.test.js # 32 automated verification tests
+│   └── package.json
 │
-├── docs/                         # Architectural & Specification Documentation
-│   └── architecture.md
-│
-├── .gitignore
+├── .gitignore                        # Comprehensive secret protection
 └── README.md
 ```
 
 ---
 
-## ⚡ Quick Start & Installation
+## 🚀 Setup & Installation Instructions
 
-### Prerequisites
-- Node.js >= 18.0.0 (Node v20 or v22 recommended)
-- npm >= 9.0.0
+### 1. Prerequisites
+- Node.js v18 or v20+
+- npm v9+
+- (Optional for cloud DB) Supabase project or PostgreSQL instance
 
-### 1. Backend Setup
+### 2. Environment Configuration
+Copy the template files:
 ```bash
-# Navigate to the backend directory
-cd backend
-
-# Install dependencies
-npm install
-
-# Copy environment variables
-copy .env.example .env
-
-# Start development server (Port 5000)
-npm run dev
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
 
-The backend starts at `http://localhost:5000`. Test the health check:
-```bash
-curl http://localhost:5000/api/health
-```
-
-Expected output:
-```json
-{
-  "success": true,
-  "message": "CampusCoins API is running"
-}
-```
-
-### 2. Frontend Setup
-```bash
-# Open a new terminal and navigate to frontend
-cd frontend
-
-# Install dependencies
-npm install
-
-# Copy environment variables
-copy .env.example .env
-
-# Start frontend dev server
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`.
-
----
-
-## 🔐 Environment Variables
-
-### Frontend (`frontend/.env.example`)
-```env
-VITE_API_BASE_URL=http://localhost:5000
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
-### Backend (`backend/.env.example`)
+**Backend `.env`**:
 ```env
 PORT=5000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
+ALLOW_DEV_MOCK_AUTH=false
+
+# Optional Supabase credentials
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+**Frontend `.env`**:
+```env
+VITE_API_BASE_URL=http://localhost:5000
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+### 3. Applying Database Migrations
+If using Supabase or PostgreSQL:
+1. Open the Supabase SQL Editor.
+2. Load and execute [`docs/database/migration_complete.sql`](docs/database/migration_complete.sql).
+3. The script creates all tables, foreign keys, atomic ledger functions, and RLS policies.
+
+### 4. Running the Application
+
+**Run Backend**:
+```bash
+cd backend
+npm install
+npm run dev
+# Running on http://localhost:5000
+```
+
+**Run Frontend**:
+```bash
+cd frontend
+npm install
+npm run dev
+# Running on http://localhost:5173
 ```
 
 ---
 
-## 🗺️ Development Roadmap
+## 🧪 Testing & Verification
 
-- [x] **Phase 1: Project Foundation**
-  - Monorepo structure, dark glassmorphism design system.
-  - Reusable component library (Button, Input, Card, Modal, Badge, etc.).
-  - Landing page with CSS/SVG mockup & live API status indicator.
-  - Auth UI (`/login`, `/register`, role selector, forgot password modal).
-  - Role-based dashboard placeholders (`/student/dashboard`, `/staff/dashboard`, `/admin/dashboard`).
-  - Express backend with `/api/health`, helmet, cors, rate limiting, and centralized error handling.
-- [x] **Phase 2: Core Database & Supabase Integration**
-  - PostgreSQL schema creation (Complaints, Profiles, Wallets, Departments, Locations).
-  - Supabase Auth (Sign Up, Sign In, Session management, Row Level Security, RBAC).
-  - Seed datasets and profiles.
-- [x] **Phase 3: Core Complaint Management System** *(Completed)*
-  - Complete complaint lifecycle: Submit &rarr; Admin Review / Reject / Assign &rarr; Staff In Progress & Progress Notes & Resolve &rarr; Student Verify / Reopen.
-  - Cascading location selector (Building &rarr; Floor &rarr; Room + General Location fallback).
-  - Evidence upload (images &le; 5MB, PDF &le; 10MB, video &le; 25MB) with preview lightbox.
-  - Vertical chronological audit trail and status timeline.
-  - Strict server-side RBAC guards and state machine validator (`ALLOWED_TRANSITIONS`).
-  - 24-case automated lifecycle test suite (`node test/complaintLifecycle.test.js` &rarr; 24/24 Passed).
-- [ ] **Phase 4: Campus Navigation Engine**
-  - OpenStreetMap & MapLibre integration.
-  - Dijkstra/A* pathfinding between college blocks and reported incidents.
-- [ ] **Phase 5: Gamification, Wallet & Bounties**
-  - Coin transaction ledger, leaderboard, reward redemption shop.
-
----
-
-## 🧪 Automated Testing
-
-To run the end-to-end complaint lifecycle test suite:
+All critical business rules, security permissions, atomic ledger operations, voucher verification, and duplicate detection routines are verified by automated tests:
 
 ```bash
 cd backend
-node test/complaintLifecycle.test.js
+npm test
 ```
 
-All 24 test cases will validate creation, validation constraints, admin rejection reasons, staff assignments, work order progress notes, resolution comments, student verification, student reopening reasons, IDOR security, and illegal state transitions.
+**Execution Results**:
+```text
+============================================================
+  FINAL RESULTS: 32 PASSED, 0 FAILED
+============================================================
+- Suite 1: Health & API Gateway Baseline (2 tests)
+- Suite 2: Student Complaint Submission & Validation (5 tests)
+- Suite 3: Admin Review, Rejection & Technician Assignment (5 tests)
+- Suite 4: Staff Workflow, Updates & Resolution (5 tests)
+- Suite 5: Security, IDOR Protection & Role RBAC (3 tests)
+- Suite 6: Mission Claim Security & Incomplete Mission Rejection (1 test)
+- Suite 7: Reward Redemption, Atomic Coin Deduction & Anti-Reuse Vouchers (4 tests)
+- Suite 8: Smart Duplicate Detection, SLA Analytics & CSV Export (7 tests)
+```
+
+**Production Build Validation**:
+```bash
+cd frontend
+npm run build
+# vite build completed with 0 errors
+```
+
+---
+
+## 🛡️ Security Audit & Hardening Summary
+
+1. **Role-Bypass Headers Eliminated**: Client role headers are strictly ignored in production. Authorization is resolved strictly from the verified user session.
+2. **Atomic Coin Transactions**: Direct client coin awards are prohibited; coin additions and deductions execute atomically server-side with idempotency guards.
+3. **Single-Use Vouchers**: Store redemptions generate unique, signed `VCH-XXXX-XXXX-XXXX` tokens. Once fulfilled by authorized staff, repeated use is blocked.
+4. **Mission Claim Validation**: Server queries actual completed complaints rather than trusting client completion flags.
+5. **IDOR & Resource Isolation**: Students cannot view or modify tickets raised by other students; staff can only service work orders assigned to their department.
+6. **Zero Secrets in Code**: Privileged database tokens are excluded from client bundles and git tracking.

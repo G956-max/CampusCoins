@@ -9,36 +9,39 @@ export default {
     extend: {
       colors: {
         campus: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#10b981', // Emerald coin green
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
+          bg: '#F7FAF7',
+          surface: '#FFFFFF',
+          primary: '#168451',
+          'primary-dark': '#116B42',
+          soft: '#EAF6EE',
+          text: '#17211B',
+          muted: '#647168',
+          border: '#E1E9E2',
+          success: '#168451',
+          warning: '#B7791F',
+          danger: '#C43D3D',
+          50: '#F7FAF7',
+          100: '#EAF6EE',
+          200: '#CBE7D4',
+          300: '#8DD0A7',
+          400: '#3EAA70',
+          500: '#168451', // Primary green
+          600: '#116B42', // Dark green hover
+          700: '#0E5535',
+          800: '#0B422A',
+          900: '#072E1D',
         },
         coin: {
-          400: '#fbbf24',
-          500: '#f59e0b', // Gold reward accent
-          600: '#d97706',
-        },
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          400: '#818cf8',
-          500: '#6366f1', // Indigo tech primary
-          600: '#4f46e5',
-          700: '#4338ca',
+          400: '#D99B26',
+          500: '#B7791F', // Warning / Gold coin accent
+          600: '#975F12',
         },
         dark: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617', // Deep background
+          50: '#F7FAF7',
+          100: '#EAF6EE',
+          800: '#2A362F',
+          900: '#17211B',
+          950: '#0E1612',
         }
       },
       fontFamily: {
