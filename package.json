@@ -8,6 +8,7 @@
     "backend"
   ],
   "scripts": {
+    "postinstall": "npm --prefix frontend install && npm --prefix backend install",
     "build": "npm --prefix frontend run build",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
@@ -25,6 +26,7 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "multer": "^1.4.5-lts.1",
+    "vite": "^6.1.0",
     "zod": "^3.24.2"
   },
   "keywords": [
