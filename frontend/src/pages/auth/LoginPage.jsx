@@ -127,6 +127,14 @@ const LoginPage = () => {
 
         {/* Login Card */}
         <Card className="p-6 sm:p-8 border-[#E1E9E2] bg-white shadow-sm">
+          {/* Direct new users to Register */}
+          <div className="mb-5 p-3 rounded-xl bg-[#EAF6EE] border border-[#CBE7D4] text-[#168451] text-xs flex items-center justify-between gap-2">
+            <span>Don't have an account yet?</span>
+            <Link to="/register" className="font-bold underline hover:text-[#116B42] flex items-center gap-1 shrink-0">
+              Create Account <ArrowRight size={13} />
+            </Link>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {authError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-fadeIn">

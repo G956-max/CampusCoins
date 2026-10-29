@@ -69,7 +69,7 @@ const LandingPage = () => {
                   className="w-full sm:w-auto shadow-xs"
                   rightIcon={<ArrowRight size={18} />}
                 >
-                  Get Started Free
+                  Get Started (Create Account)
                 </Button>
               </Link>
 
@@ -83,6 +83,16 @@ const LandingPage = () => {
                   Interactive Campus Map
                 </Button>
               </Link>
+            </div>
+
+            {/* Quick login switch for existing users */}
+            <div className="pt-1 text-center lg:text-left">
+              <p className="text-xs text-[#647168]">
+                Already registered with college email?{' '}
+                <Link to="/login" className="text-[#168451] hover:text-[#116B42] font-bold hover:underline">
+                  Sign in here &rarr;
+                </Link>
+              </p>
             </div>
 
             {/* Micro stats / Trust badges */}
@@ -367,13 +377,13 @@ const LandingPage = () => {
           </p>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/register" className="w-full sm:w-auto">
-              <Button size="lg" variant="primary" className="w-full sm:w-auto" rightIcon={<ArrowRight size={18} />}>
+              <Button size="lg" variant="primary" className="w-full sm:w-auto shadow-xs" rightIcon={<ArrowRight size={18} />}>
                 Get Started (Sign Up)
               </Button>
             </Link>
             <Link to="/login" className="w-full sm:w-auto">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Login with College Email
+                Already have an account? Sign In
               </Button>
             </Link>
           </div>

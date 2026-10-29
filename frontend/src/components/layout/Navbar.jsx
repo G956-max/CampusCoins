@@ -86,11 +86,6 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Login
-                  </Button>
-                </Link>
                 <Link to="/register">
                   <Button
                     variant="primary"
@@ -98,6 +93,11 @@ const Navbar = () => {
                     rightIcon={<ArrowRight size={14} />}
                   >
                     Get Started
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Sign In
                   </Button>
                 </Link>
               </div>
@@ -189,14 +189,14 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full justify-center">
-                    Login
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="primary" className="w-full justify-center shadow-xs" rightIcon={<ArrowRight size={16} />}>
+                    Get Started (Sign Up)
                   </Button>
                 </Link>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="primary" className="w-full justify-center" rightIcon={<ArrowRight size={16} />}>
-                    Get Started
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full justify-center">
+                    Already have an account? Sign In
                   </Button>
                 </Link>
               </>
