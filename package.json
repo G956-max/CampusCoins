@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "CampusCoins Platform - Report. Resolve. Earn. Improve.",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "build": "npm --prefix frontend run build",
     "dev:backend": "npm --prefix backend run dev",
