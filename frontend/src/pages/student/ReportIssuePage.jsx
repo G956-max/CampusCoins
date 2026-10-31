@@ -267,10 +267,57 @@ const ReportIssuePage = () => {
 
       // 3. Upload evidence if attached
       if (selectedFile && complaint?.id) {
+        let uploaded = false;
         try {
           await complaintApi.uploadEvidence(complaint.id, selectedFile);
+          uploaded = true;
         } catch (uploadErr) {
-          console.warn('Evidence upload notice:', uploadErr);
+          console.warn('Backend API evidence upload notice:', uploadErr);
+        }
+
+        // Direct Supabase fallback for evidence storage and database
+        if (!uploaded && supabase) {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const currentUserId = user?.id || complaint.student_id;
+            let fileUrl = '';
+
+            try {
+              const sanitizedName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+              const filePath = `${complaint.id}/${Date.now()}_${sanitizedName}`;
+              const { error: storageErr } = await supabase.storage.from('complaints').upload(filePath, selectedFile, {
+                contentType: selectedFile.type,
+                upsert: true,
+              });
+              if (!storageErr) {
+                const { data: pubData } = supabase.storage.from('complaints').getPublicUrl(filePath);
+                fileUrl = pubData?.publicUrl || '';
+              }
+            } catch (sErr) {
+              console.warn('Supabase storage upload notice:', sErr);
+            }
+
+            if (!fileUrl && selectedFile.type.startsWith('image/')) {
+              fileUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => resolve('');
+                reader.readAsDataURL(selectedFile);
+              });
+            }
+
+            if (fileUrl && currentUserId) {
+              await supabase.from('complaint_evidence').insert({
+                complaint_id: complaint.id,
+                file_url: fileUrl,
+                file_type: selectedFile.type,
+                file_name: selectedFile.name,
+                uploaded_by: currentUserId,
+              });
+            }
+          } catch (supaEvidenceErr) {
+            console.warn('Direct Supabase evidence fallback notice:', supaEvidenceErr);
+          }
         }
       }
 

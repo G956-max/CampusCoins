@@ -62,6 +62,44 @@ const StudentComplaintDetailPage = () => {
         if (directData) complaintData = directData;
       }
 
+      // Ensure evidence, updates, and location relations are loaded
+      if (complaintData && supabase) {
+        if (!complaintData.evidence || complaintData.evidence.length === 0) {
+          const { data: evData } = await supabase
+            .from('complaint_evidence')
+            .select('*')
+            .eq('complaint_id', id)
+            .order('created_at', { ascending: false });
+          if (evData && evData.length > 0) {
+            complaintData.evidence = evData;
+          }
+        }
+
+        if (!complaintData.updates || complaintData.updates.length === 0) {
+          const { data: upData } = await supabase
+            .from('complaint_updates')
+            .select('*')
+            .eq('complaint_id', id)
+            .order('created_at', { ascending: true });
+          if (upData && upData.length > 0) {
+            complaintData.updates = upData;
+          }
+        }
+
+        if (!complaintData.building && complaintData.building_id) {
+          const { data: bld } = await supabase.from('buildings').select('*').eq('id', complaintData.building_id).maybeSingle();
+          if (bld) complaintData.building = bld;
+        }
+        if (!complaintData.floor && complaintData.floor_id) {
+          const { data: flr } = await supabase.from('floors').select('*').eq('id', complaintData.floor_id).maybeSingle();
+          if (flr) complaintData.floor = flr;
+        }
+        if (!complaintData.room && complaintData.room_id) {
+          const { data: rm } = await supabase.from('rooms').select('*').eq('id', complaintData.room_id).maybeSingle();
+          if (rm) complaintData.room = rm;
+        }
+      }
+
       if (!complaintData) {
         throw new Error('Complaint not found or you do not have permission to view it.');
       }
@@ -128,7 +166,56 @@ const StudentComplaintDetailPage = () => {
     setActionLoading(true);
     setUploadError('');
     try {
-      await complaintApi.uploadEvidence(id, uploadFile);
+      let uploaded = false;
+      try {
+        await complaintApi.uploadEvidence(id, uploadFile);
+        uploaded = true;
+      } catch (apiErr) {
+        console.warn('Backend API upload evidence notice:', apiErr);
+      }
+
+      // Direct Supabase fallback
+      if (!uploaded && supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        let fileUrl = '';
+        try {
+          const sanitizedName = uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const filePath = `${id}/${Date.now()}_${sanitizedName}`;
+          const { error: storageErr } = await supabase.storage.from('complaints').upload(filePath, uploadFile, {
+            contentType: uploadFile.type,
+            upsert: true,
+          });
+          if (!storageErr) {
+            const { data: pubData } = supabase.storage.from('complaints').getPublicUrl(filePath);
+            fileUrl = pubData?.publicUrl || '';
+          }
+        } catch (stErr) {
+          console.warn('Storage upload notice:', stErr);
+        }
+
+        if (!fileUrl && uploadFile.type.startsWith('image/')) {
+          fileUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target.result);
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(uploadFile);
+          });
+        }
+
+        const currentUserId = user?.id || complaint?.student_id;
+        if (fileUrl && currentUserId) {
+          const { error: insErr } = await supabase.from('complaint_evidence').insert({
+            complaint_id: id,
+            file_url: fileUrl,
+            file_type: uploadFile.type,
+            file_name: uploadFile.name,
+            uploaded_by: currentUserId,
+          });
+          if (insErr) throw insErr;
+          uploaded = true;
+        }
+      }
+
       setUploadSuccess('Evidence uploaded successfully.');
       setUploadFile(null);
       setTimeout(() => {
@@ -137,7 +224,7 @@ const StudentComplaintDetailPage = () => {
       }, 1000);
       await fetchComplaintDetails();
     } catch (err) {
-      setUploadError(err.response?.data?.message || 'Failed to upload evidence.');
+      setUploadError(err.message || 'Failed to upload evidence.');
     } finally {
       setActionLoading(false);
     }

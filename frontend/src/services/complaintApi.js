@@ -35,9 +35,7 @@ export const complaintApi = {
   uploadEvidence: async (id, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await api.post(`/api/complaints/${id}/evidence`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const res = await api.post(`/api/complaints/${id}/evidence`, formData);
     return res.data || res;
   },
   verifyResolution: async (id) => {

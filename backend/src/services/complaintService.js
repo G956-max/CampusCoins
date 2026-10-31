@@ -289,6 +289,20 @@ class ComplaintService {
 
         if (!error && data) {
           complaint = data;
+        } else {
+          // Resilient fallback: simple fetch if complex postgREST join fails
+          const { data: simpleData } = await supabase.from('complaints').select('*').eq('id', complaintId).maybeSingle();
+          if (simpleData) {
+            const [evRes, upRes] = await Promise.all([
+              supabase.from('complaint_evidence').select('*').eq('complaint_id', complaintId).order('created_at', { ascending: false }),
+              supabase.from('complaint_updates').select('*').eq('complaint_id', complaintId).order('created_at', { ascending: true }),
+            ]);
+            complaint = {
+              ...simpleData,
+              evidence: evRes.data || [],
+              updates: upRes.data || [],
+            };
+          }
         }
       } catch (err) {
         logger.warn(`Supabase getComplaintById notice: ${err.message}`);
@@ -947,7 +961,7 @@ class ComplaintService {
   async addEvidence(complaintId, file, user) {
     const complaint = await this.getComplaintById(complaintId, user);
     const timestamp = new Date().toISOString();
-    const id = `ev-${Date.now()}`;
+    const id = crypto.randomUUID();
 
     let fileUrl = `https://storage.campuscoins.local/evidence/${complaintId}/${file.originalname}`;
     const supabase = getSupabaseClient();
@@ -973,8 +987,8 @@ class ComplaintService {
       }
     }
 
-    // In-memory record or data URL representation for previewing
-    if (file.mimetype.startsWith('image/')) {
+    // If remote storage upload was not successful, use base64 data URL for previewing
+    if (fileUrl.startsWith('https://storage.campuscoins.local') && file.mimetype.startsWith('image/')) {
       const base64 = file.buffer.toString('base64');
       fileUrl = `data:${file.mimetype};base64,${base64}`;
     }
@@ -984,6 +998,9 @@ class ComplaintService {
       complaint_id: complaintId,
       file_url: fileUrl,
       file_type: file.mimetype,
+      file_name: file.originalname || 'attachment',
+      file_size: file.size || (file.buffer ? file.buffer.length : 0),
+      evidence_type: 'initial',
       uploaded_by: user.id,
       created_at: timestamp,
     };

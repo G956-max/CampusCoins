@@ -72,3 +72,4 @@ INSERT INTO public.rooms (id, floor_id, room_number, room_name, room_type, capac
     ('r1000000-0000-0000-0000-000000000004', 'f1000000-0000-0000-0000-000000000005', 'IDEA Lab', 'AICTE IDEA Innovation Lab', 'lab', 75),
     ('r1000000-0000-0000-0000-000000000005', 'f1000000-0000-0000-0000-000000000020', 'Auditorium Hall', 'Main Convention Seating', 'auditorium', 1500)
 ON CONFLICT DO NOTHING;
+
