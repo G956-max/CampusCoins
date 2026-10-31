@@ -176,6 +176,7 @@ const verifyAuth = async (req, res, next) => {
       staff_id: activeProfile.staff_id || null,
       is_active: activeProfile.is_active,
     };
+    req.token = token;
 
     return next();
   } catch (err) {

@@ -153,7 +153,7 @@ class ComplaintService {
   /**
    * Create Complaint (Student Only)
    */
-  async createComplaint({ studentId, title, description, category, priority = 'medium', buildingId, floorId, roomId, generalLocation }) {
+  async createComplaint({ studentId, title, description, category, priority = 'medium', buildingId, floorId, roomId, generalLocation }, userToken = null) {
     const timestamp = new Date().toISOString();
     const id = crypto.randomUUID();
     const trackingCode = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -178,12 +178,13 @@ class ComplaintService {
       resolved_at: null,
     };
 
-    const supabase = getSupabaseClient();
+    const supabase = getSupabaseClient(userToken);
     if (supabase) {
       try {
         const { data, error } = await supabase.from('complaints').insert(newComplaint).select().single();
         if (error) {
           logger.warn(`Supabase createComplaint notice: ${error.message}`);
+          throw new Error(`Database error saving complaint: ${error.message}`);
         } else {
           // Add initial timeline update
           await supabase.from('complaint_updates').insert({
@@ -194,7 +195,8 @@ class ComplaintService {
           });
         }
       } catch (err) {
-        logger.warn(`Supabase createComplaint notice: ${err.message}`);
+        logger.error(`Supabase createComplaint error: ${err.message}`);
+        throw err;
       }
     }
 
@@ -300,10 +302,10 @@ class ComplaintService {
   /**
    * List Complaints for Student (their own only)
    */
-  async getStudentComplaints(studentId, { status, category, priority, search, page = 1, limit = 10 } = {}) {
+  async getStudentComplaints(studentId, { status, category, priority, search, page = 1, limit = 10 } = {}, userToken = null) {
     let list = inMemoryComplaints.filter((c) => c.student_id === studentId);
 
-    const supabase = getSupabaseClient();
+    const supabase = getSupabaseClient(userToken);
     if (supabase) {
       try {
         let query = supabase.from('complaints').select(`
@@ -318,7 +320,21 @@ class ComplaintService {
         if (priority) query = query.eq('priority', priority);
         if (search) query = query.ilike('title', `%${search}%`);
 
-        const { data, error } = await query;
+        let { data, error } = await query;
+        if (error) {
+          logger.warn(`Supabase getStudentComplaints join notice: ${error.message}, falling back to simple query`);
+          let fallback = supabase.from('complaints').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+          if (status) fallback = fallback.eq('status', status);
+          if (category) fallback = fallback.eq('category', category);
+          if (priority) fallback = fallback.eq('priority', priority);
+          if (search) fallback = fallback.ilike('title', `%${search}%`);
+          const fbRes = await fallback;
+          if (!fbRes.error && Array.isArray(fbRes.data)) {
+            data = fbRes.data;
+            error = null;
+          }
+        }
+
         if (!error && Array.isArray(data)) {
           const existingIds = new Set(data.map((d) => d.id));
           const unsynced = list.filter((c) => !existingIds.has(c.id));
@@ -372,7 +388,21 @@ class ComplaintService {
         if (category) query = query.eq('category', category);
         if (search) query = query.ilike('title', `%${search}%`);
 
-        const { data, error } = await query;
+        let { data, error } = await query;
+        if (error) {
+          logger.warn(`Supabase getStudentComplaints join notice: ${error.message}, falling back to simple query`);
+          let fallback = supabase.from('complaints').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+          if (status) fallback = fallback.eq('status', status);
+          if (category) fallback = fallback.eq('category', category);
+          if (priority) fallback = fallback.eq('priority', priority);
+          if (search) fallback = fallback.ilike('title', `%${search}%`);
+          const fbRes = await fallback;
+          if (!fbRes.error && Array.isArray(fbRes.data)) {
+            data = fbRes.data;
+            error = null;
+          }
+        }
+
         if (!error && Array.isArray(data)) {
           const existingIds = new Set(data.map((d) => d.id));
           const unsynced = list.filter((c) => !existingIds.has(c.id));
@@ -430,7 +460,21 @@ class ComplaintService {
         if (assigned === 'false') query = query.is('assigned_staff_id', null);
         if (search) query = query.ilike('title', `%${search}%`);
 
-        const { data, error } = await query;
+        let { data, error } = await query;
+        if (error) {
+          logger.warn(`Supabase getStudentComplaints join notice: ${error.message}, falling back to simple query`);
+          let fallback = supabase.from('complaints').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+          if (status) fallback = fallback.eq('status', status);
+          if (category) fallback = fallback.eq('category', category);
+          if (priority) fallback = fallback.eq('priority', priority);
+          if (search) fallback = fallback.ilike('title', `%${search}%`);
+          const fbRes = await fallback;
+          if (!fbRes.error && Array.isArray(fbRes.data)) {
+            data = fbRes.data;
+            error = null;
+          }
+        }
+
         if (!error && Array.isArray(data)) {
           const existingIds = new Set(data.map((d) => d.id));
           const unsynced = list.filter((c) => !existingIds.has(c.id));

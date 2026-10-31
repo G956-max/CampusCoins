@@ -31,7 +31,7 @@ const createComplaint = async (req, res, next) => {
       floorId: floor_id,
       roomId: room_id,
       generalLocation: general_location,
-    });
+    }, req.token);
 
     return sendSuccess(res, 'Complaint created successfully', complaint, 201);
   } catch (err) {
@@ -52,7 +52,7 @@ const getMyComplaints = async (req, res, next) => {
       search,
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
-    });
+    }, req.token);
 
     return res.status(200).json({
       success: true,

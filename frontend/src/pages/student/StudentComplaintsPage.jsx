@@ -18,6 +18,7 @@ import Badge from '../../components/common/Badge';
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge';
 import PriorityBadge from '../../components/complaints/PriorityBadge';
 import complaintApi from '../../services/complaintApi';
+import { supabase } from '../../config/supabase';
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITIES, COMPLAINT_STATUSES } from '../../constants/complaints';
 
 const StudentComplaintsPage = () => {
@@ -37,12 +38,57 @@ const StudentComplaintsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await complaintApi.getMyComplaints();
-      const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      let list = [];
+
+      // 1. Fetch directly from Supabase first (real-time source of truth)
+      if (supabase) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data, error: supaErr } = await supabase
+              .from('complaints')
+              .select(`
+                *,
+                building:buildings (name, code),
+                floor:floors (floor_name),
+                room:rooms (room_number)
+              `)
+              .eq('student_id', user.id)
+              .order('created_at', { ascending: false });
+
+            if (!supaErr && Array.isArray(data) && data.length > 0) {
+              list = data;
+            } else {
+              const { data: simpleData } = await supabase
+                .from('complaints')
+                .select('*')
+                .eq('student_id', user.id)
+                .order('created_at', { ascending: false });
+              if (Array.isArray(simpleData) && simpleData.length > 0) {
+                list = simpleData;
+              }
+            }
+          }
+        } catch (supaErr) {
+          console.warn('Supabase fetch notice:', supaErr);
+        }
+      }
+
+      // 2. Fetch from Backend API if list is empty
+      if (list.length === 0) {
+        try {
+          const res = await complaintApi.getMyComplaints();
+          const apiList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+          if (apiList.length > 0) list = apiList;
+        } catch (apiErr) {
+          console.warn('Backend API get complaints notice:', apiErr);
+        }
+      }
+
       setComplaints(list);
     } catch (err) {
       console.error('Error fetching student complaints:', err);
-      setError(err.response?.data?.message || 'Failed to load complaints. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to load complaints. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -18,6 +18,7 @@ import EvidenceGallery from '../../components/complaints/EvidenceGallery';
 import ComplaintTimeline from '../../components/complaints/ComplaintTimeline';
 import complaintApi from '../../services/complaintApi';
 import { COMPLAINT_STATUSES } from '../../constants/complaints';
+import { supabase } from '../../config/supabase';
 
 const StudentComplaintDetailPage = () => {
   const { id } = useParams();
@@ -43,14 +44,35 @@ const StudentComplaintDetailPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await complaintApi.getComplaintDetails(id);
-      setComplaint(res.data);
+      let complaintData = null;
+      try {
+        const res = await complaintApi.getComplaintDetails(id);
+        complaintData = res?.data || res;
+      } catch (apiErr) {
+        console.warn('Backend API get complaint details notice:', apiErr);
+      }
+
+      // Direct Supabase fallback
+      if (!complaintData && supabase) {
+        const { data: directData } = await supabase
+          .from('complaints')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (directData) complaintData = directData;
+      }
+
+      if (!complaintData) {
+        throw new Error('Complaint not found or you do not have permission to view it.');
+      }
+
+      setComplaint(complaintData);
     } catch (err) {
       console.error('Failed to load complaint details:', err);
       setError(
         err.response?.status === 404
           ? 'Complaint not found or you do not have permission to view it.'
-          : err.response?.data?.message || 'Failed to load complaint.'
+          : err.response?.data?.message || err.message || 'Failed to load complaint.'
       );
     } finally {
       setLoading(false);

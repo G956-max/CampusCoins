@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/commo
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../config/supabase';
 import complaintApi from '../../services/complaintApi';
 import { getWallet, getTransactions } from '../../services/gamificationApi';
 import { calculateLevelInfo } from '../../config/rewardRules';
@@ -49,19 +50,41 @@ const StudentDashboard = () => {
           getTransactions({ limit: 4, page: 1 }),
         ]);
 
-        if (complaintsRes.status === 'fulfilled' && complaintsRes.value) {
-          const raw = complaintsRes.value;
-          const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
-          setRecentComplaints(data.slice(0, 5));
-          const total = data.length;
-          const pending = data.filter((c) =>
-            ['submitted', 'under_review', 'assigned', 'in_progress'].includes(c.status)
-          ).length;
-          const resolved = data.filter((c) =>
-            ['resolved', 'verified'].includes(c.status)
-          ).length;
-          setComplaintStats({ total, pending, resolved });
+        let data = [];
+        // 1. Direct Supabase fetch first (real-time source of truth)
+        if (supabase) {
+          try {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser) {
+              const { data: directData, error: dirErr } = await supabase
+                .from('complaints')
+                .select('*')
+                .eq('student_id', currentUser.id)
+                .order('created_at', { ascending: false });
+              if (!dirErr && Array.isArray(directData) && directData.length > 0) {
+                data = directData;
+              }
+            }
+          } catch (supaErr) {
+            console.warn('Dashboard direct complaints notice:', supaErr);
+          }
         }
+
+        // 2. Fallback to backend API if Supabase was empty
+        if (data.length === 0 && complaintsRes.status === 'fulfilled' && complaintsRes.value) {
+          const raw = complaintsRes.value;
+          data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        }
+
+        setRecentComplaints(data.slice(0, 5));
+        const total = data.length;
+        const pending = data.filter((c) =>
+          ['submitted', 'under_review', 'assigned', 'in_progress'].includes(c.status)
+        ).length;
+        const resolved = data.filter((c) =>
+          ['resolved', 'verified'].includes(c.status)
+        ).length;
+        setComplaintStats({ total, pending, resolved });
 
         if (walletRes.status === 'fulfilled' && walletRes.value) {
           setWalletData(walletRes.value);

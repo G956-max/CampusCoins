@@ -190,9 +190,52 @@ const ReportIssuePage = () => {
     setSubmitError('');
 
     try {
-      let complaint;
-      try {
-        complaint = await complaintApi.createComplaint({
+      let complaint = null;
+      const trackingCode = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // 1. Direct Supabase Insert First (Authenticated client ensures immediate DB persistence)
+      if (supabase) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: directData, error: directErr } = await supabase
+              .from('complaints')
+              .insert({
+                student_id: user.id,
+                tracking_code: trackingCode,
+                title: data.title,
+                description: data.description,
+                category: data.category,
+                priority: data.priority,
+                status: 'submitted',
+                building_id: buildingId || null,
+                floor_id: floorId || null,
+                room_id: roomId || null,
+              })
+              .select()
+              .single();
+
+            if (directErr) {
+              console.warn('Direct Supabase insert notice:', directErr);
+            } else if (directData) {
+              complaint = directData;
+              // Add initial timeline update in Supabase
+              await supabase.from('complaint_updates').insert({
+                complaint_id: directData.id,
+                updated_by: user.id,
+                status: 'submitted',
+                comment: 'Complaint created and submitted for review.',
+              }).catch(() => {});
+            }
+          }
+        } catch (supaErr) {
+          console.warn('Direct Supabase insert exception:', supaErr);
+        }
+      }
+
+      // 2. If direct Supabase insert was not completed, use backend API
+      if (!complaint) {
+        const res = await complaintApi.createComplaint({
           title: data.title,
           description: data.description,
           category: data.category,
@@ -201,38 +244,10 @@ const ReportIssuePage = () => {
           floor_id: floorId || null,
           room_id: roomId || null,
         });
-      } catch (apiErr) {
-        console.warn('Backend API submit notice, attempting Supabase direct fallback:', apiErr);
-        // Supabase direct fallback
-        if (supabase) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw apiErr;
-
-          const trackingCode = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const { data: directData, error: directErr } = await supabase
-            .from('complaints')
-            .insert({
-              student_id: user.id,
-              tracking_code: trackingCode,
-              title: data.title,
-              description: data.description,
-              category: data.category,
-              priority: data.priority,
-              status: 'submitted',
-              building_id: buildingId || null,
-              floor_id: floorId || null,
-              room_id: roomId || null,
-            })
-            .select()
-            .single();
-
-          if (directErr) throw directErr;
-          complaint = directData;
-        } else {
-          throw apiErr;
-        }
+        complaint = res?.data || res;
       }
 
+      // 3. Upload evidence if attached
       if (selectedFile && complaint?.id) {
         try {
           await complaintApi.uploadEvidence(complaint.id, selectedFile);
@@ -246,6 +261,7 @@ const ReportIssuePage = () => {
         navigate('/student/complaints');
       }, 1500);
     } catch (err) {
+      console.error('Submit error:', err);
       setSubmitError(err.message || 'Failed to submit complaint. Please check your inputs.');
     } finally {
       setIsSubmitting(false);
