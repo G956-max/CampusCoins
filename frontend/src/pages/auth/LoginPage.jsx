@@ -201,6 +201,32 @@ const LoginPage = () => {
             </Button>
           </form>
 
+          {/* Quick Admin Credentials Helper */}
+          <div className="mt-4 p-3 rounded-xl bg-[#F7FAF7] border border-[#CBE7D4] text-xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-bold text-[#17211B] flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#168451]"></span>
+                Admin Portal Login:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue('email', 'admin.campuscoins@gmail.com');
+                  setValue('password', 'AdminPassword123!');
+                }}
+                className="text-[11px] font-semibold text-[#168451] hover:underline cursor-pointer bg-[#EAF6EE] px-2 py-0.5 rounded"
+              >
+                Auto-Fill Admin
+              </button>
+            </div>
+            <p className="text-[11px] text-[#647168] font-mono select-all">
+              ID: <b className="text-[#17211B]">admin.campuscoins@gmail.com</b>
+            </p>
+            <p className="text-[11px] text-[#647168] font-mono select-all">
+              Password: <b className="text-[#17211B]">AdminPassword123!</b>
+            </p>
+          </div>
+
           {/* Switch to Register */}
           <div className="mt-6 pt-6 border-t border-[#E1E9E2] text-center">
             <p className="text-xs text-[#647168]">

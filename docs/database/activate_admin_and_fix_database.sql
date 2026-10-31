@@ -58,3 +58,4 @@ FROM auth.users
 WHERE email = 'admin.campuscoins@gmail.com'
 ON CONFLICT (id) DO UPDATE 
 SET role = 'admin', is_active = true;
+
