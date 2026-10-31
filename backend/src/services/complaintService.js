@@ -172,7 +172,6 @@ class ComplaintService {
       room_id: roomId || null,
       general_location: generalLocation || null,
       assigned_staff_id: null,
-      assigned_to: null,
       created_at: timestamp,
       updated_at: timestamp,
       resolved_at: null,
