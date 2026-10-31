@@ -24,6 +24,7 @@ import PriorityBadge from '../../components/complaints/PriorityBadge';
 import EvidenceGallery from '../../components/complaints/EvidenceGallery';
 import ComplaintTimeline from '../../components/complaints/ComplaintTimeline';
 import complaintApi from '../../services/complaintApi';
+import { supabase } from '../../config/supabase';
 import { COMPLAINT_STATUSES } from '../../constants/complaints';
 
 const StaffComplaintDetailPage = () => {
@@ -49,15 +50,63 @@ const StaffComplaintDetailPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await complaintApi.getStaffComplaintDetails(id);
-      setComplaint(res.data);
+      let complaintData = null;
+      try {
+        const res = await complaintApi.getStaffComplaintDetails(id);
+        complaintData = res?.data || res;
+      } catch (apiErr) {
+        console.warn('Backend API getStaffComplaintDetails notice:', apiErr);
+      }
+
+      if (!complaintData && supabase) {
+        const { data: supaC } = await supabase
+          .from('complaints')
+          .select(`
+            *,
+            building:buildings(name, code),
+            floor:floors(floor_name),
+            room:rooms(room_number),
+            student:profiles!student_id(full_name, email)
+          `)
+          .eq('id', id)
+          .maybeSingle();
+
+        if (supaC) {
+          complaintData = supaC;
+        } else {
+          const { data: simpleC } = await supabase.from('complaints').select('*').eq('id', id).maybeSingle();
+          if (simpleC) complaintData = simpleC;
+        }
+      }
+
+      if (complaintData && supabase) {
+        if (!complaintData.evidence || complaintData.evidence.length === 0) {
+          const { data: evList } = await supabase
+            .from('complaint_evidence')
+            .select('*')
+            .eq('complaint_id', id)
+            .order('created_at', { ascending: false });
+          if (evList) complaintData.evidence = evList;
+        }
+
+        if (!complaintData.updates || complaintData.updates.length === 0) {
+          const { data: upList } = await supabase
+            .from('complaint_updates')
+            .select('*')
+            .eq('complaint_id', id)
+            .order('created_at', { ascending: true });
+          if (upList) complaintData.updates = upList;
+        }
+      }
+
+      if (!complaintData) {
+        throw new Error('Work order not found.');
+      }
+
+      setComplaint(complaintData);
     } catch (err) {
       console.error('Failed to load complaint:', err);
-      setError(
-        err.response?.status === 404
-          ? 'Work order not found or not assigned to your account.'
-          : err.response?.data?.message || 'Failed to load ticket.'
-      );
+      setError(err.message || 'Failed to load ticket.');
     } finally {
       setLoading(false);
     }

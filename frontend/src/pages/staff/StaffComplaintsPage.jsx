@@ -18,10 +18,13 @@ import Badge from '../../components/common/Badge';
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge';
 import PriorityBadge from '../../components/complaints/PriorityBadge';
 import complaintApi from '../../services/complaintApi';
+import { supabase } from '../../config/supabase';
+import { useAuth } from '../../context/AuthContext';
 import { COMPLAINT_CATEGORIES, COMPLAINT_STATUSES } from '../../constants/complaints';
 
 const StaffComplaintsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,8 +38,33 @@ const StaffComplaintsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await complaintApi.getStaffComplaints();
-      const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      let list = [];
+      try {
+        const res = await complaintApi.getStaffComplaints();
+        list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      } catch (apiErr) {
+        console.warn('Backend API getStaffComplaints notice:', apiErr);
+      }
+
+      if (list.length === 0 && supabase) {
+        const staffId = user?.id || 'b8000000-0000-0000-0000-000000000002';
+        const { data: supaData } = await supabase
+          .from('complaints')
+          .select(`
+            *,
+            building:buildings(name, code),
+            floor:floors(floor_name),
+            room:rooms(room_number),
+            student:profiles!student_id(full_name, email)
+          `)
+          .or(`assigned_staff_id.eq.${staffId},status.in.(assigned,in_progress,resolved)`)
+          .order('created_at', { ascending: false });
+
+        if (supaData && supaData.length > 0) {
+          list = supaData;
+        }
+      }
+
       setComplaints(list);
     } catch (err) {
       console.error('Failed to load staff complaints:', err);

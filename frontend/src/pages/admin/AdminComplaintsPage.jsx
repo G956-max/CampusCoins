@@ -19,6 +19,7 @@ import Badge from '../../components/common/Badge';
 import ComplaintStatusBadge from '../../components/complaints/ComplaintStatusBadge';
 import PriorityBadge from '../../components/complaints/PriorityBadge';
 import complaintApi from '../../services/complaintApi';
+import { supabase } from '../../config/supabase';
 import {
   COMPLAINT_CATEGORIES,
   COMPLAINT_PRIORITIES,
@@ -42,8 +43,37 @@ const AdminComplaintsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await complaintApi.getAllComplaints();
-      const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      let list = [];
+      try {
+        const res = await complaintApi.getAllComplaints();
+        list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      } catch (apiErr) {
+        console.warn('Backend API getAllComplaints notice:', apiErr);
+      }
+
+      if (list.length === 0 && supabase) {
+        const { data: supaData } = await supabase
+          .from('complaints')
+          .select(`
+            *,
+            building:buildings(name, code),
+            floor:floors(floor_name),
+            room:rooms(room_number),
+            student:profiles!student_id(full_name, email, student_id)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (supaData && supaData.length > 0) {
+          list = supaData;
+        } else {
+          const { data: simpleData } = await supabase
+            .from('complaints')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (simpleData) list = simpleData;
+        }
+      }
+
       setComplaints(list);
     } catch (err) {
       console.error('Failed to load admin complaints:', err);

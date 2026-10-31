@@ -36,20 +36,14 @@ export const STUDENT_NAV_ITEMS = [
 export const STAFF_NAV_ITEMS = [
   { name: 'Staff Dashboard', path: '/staff/dashboard', icon: LayoutDashboard },
   { name: 'Assigned Complaints', path: '/staff/complaints', icon: FileText },
-  { name: 'Verify Voucher', path: '/staff/verify-voucher', icon: CheckCircle2 },
   { name: 'Campus Map', path: '/staff/map', icon: MapPin },
   { name: 'Profile', path: '/staff/profile', icon: User },
 ];
 
 export const ADMIN_NAV_ITEMS = [
-  { name: 'Dashboard & Analytics', path: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Admin Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'All Complaints', path: '/admin/complaints', icon: FileText },
-  { name: 'SLA Tracking', path: '/admin/sla', icon: Clock },
   { name: 'Campus Map', path: '/admin/map', icon: MapPin },
-  { name: 'Community Bounties', path: '/admin/bounties', icon: Sparkles },
-  { name: 'Reward Store', path: '/admin/rewards', icon: Gift },
-  { name: 'Voucher Redemptions', path: '/admin/rewards/redemptions', icon: History },
-  { name: 'Gamification Rules', path: '/admin/gamification', icon: BarChart3 },
   { name: 'Profile', path: '/admin/profile', icon: User },
 ];
 
