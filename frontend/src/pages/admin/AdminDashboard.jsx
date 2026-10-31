@@ -443,7 +443,8 @@ const AdminDashboard = () => {
             <div className="space-y-3">
               {filteredComplaints.map((item) => {
                 const evidenceList = item.evidence || [];
-                const firstEvidence = evidenceList[0];
+                const initialEv = evidenceList.find((e) => e.evidence_type !== 'resolution') || evidenceList[0];
+                const resolutionEv = evidenceList.find((e) => e.evidence_type === 'resolution' || e.id !== initialEv?.id);
                 const inchargeName = getInchargeLabel(item.assigned_staff_id);
 
                 return (
@@ -453,28 +454,47 @@ const AdminDashboard = () => {
                   >
                     {/* Left: Info & Details */}
                     <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      {/* Evidence Photo Thumbnail if exists */}
-                      {firstEvidence?.file_url ? (
-                        <div
-                          onClick={() => setPreviewImage(firstEvidence.file_url)}
-                          className="w-16 h-16 rounded-xl overflow-hidden bg-[#F7FAF7] border border-[#E1E9E2] shrink-0 cursor-pointer group/img relative"
-                          title="Click to preview evidence photo"
-                        >
-                          <img
-                            src={firstEvidence.file_url}
-                            alt="Evidence"
-                            className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity text-white">
-                            <Eye size={16} />
+                      {/* Evidence Photo Thumbnails (Student Defect & Staff Solved Proof) */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {initialEv?.file_url ? (
+                          <div
+                            onClick={() => setPreviewImage(initialEv.file_url)}
+                            className="w-16 h-16 rounded-xl overflow-hidden bg-[#F7FAF7] border border-[#E1E9E2] shrink-0 cursor-pointer group/img relative"
+                            title="Student Defect Photo (Click to preview)"
+                          >
+                            <img
+                              src={initialEv.file_url}
+                              alt="Defect Evidence"
+                              className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[8px] font-bold text-center py-0.5">
+                              Defect
+                            </span>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="w-16 h-16 rounded-xl bg-[#F7FAF7] border border-[#E1E9E2] shrink-0 flex flex-col items-center justify-center text-[#A4B3A8]">
-                          <FileText size={20} />
-                          <span className="text-[9px] mt-0.5">No Photo</span>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-[#F7FAF7] border border-[#E1E9E2] shrink-0 flex flex-col items-center justify-center text-[#A4B3A8]">
+                            <FileText size={18} />
+                            <span className="text-[9px] mt-0.5">No Photo</span>
+                          </div>
+                        )}
+
+                        {resolutionEv?.file_url && (
+                          <div
+                            onClick={() => setPreviewImage(resolutionEv.file_url)}
+                            className="w-16 h-16 rounded-xl overflow-hidden bg-[#EAF6EE] border border-[#168451] shrink-0 cursor-pointer group/img relative"
+                            title="Staff Completion Proof Photo (Click to preview)"
+                          >
+                            <img
+                              src={resolutionEv.file_url}
+                              alt="Resolution Proof"
+                              className="w-full h-full object-cover group-hover/img:scale-110 transition-transform"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-[#168451] text-white text-[8px] font-bold text-center py-0.5">
+                              Fixed Proof
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
                       <div className="min-w-0 space-y-1">
                         {/* Tags Row */}
@@ -505,6 +525,13 @@ const AdminDashboard = () => {
                               'Campus Location'}
                           </span>
                         </div>
+
+                        {/* Resolution remark if staff marked completed */}
+                        {item.resolution_comment && (
+                          <p className="text-[11px] text-[#168451] bg-[#EAF6EE] px-2 py-1 rounded-lg border border-[#CBE7D4]">
+                            <b>Staff Resolution:</b> {item.resolution_comment}
+                          </p>
+                        )}
 
                         {/* Student Details & Date */}
                         <div className="text-[11px] text-[#647168] flex flex-wrap items-center gap-2 pt-0.5">

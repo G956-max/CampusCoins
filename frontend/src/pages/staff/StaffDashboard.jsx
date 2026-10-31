@@ -40,6 +40,8 @@ const StaffDashboard = () => {
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [resolutionComment, setResolutionComment] = useState('');
+  const [completionFile, setCompletionFile] = useState(null);
+  const [completionFilePreview, setCompletionFilePreview] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   // Evidence Preview Modal State
@@ -192,16 +194,70 @@ const StaffDashboard = () => {
   const openCompleteModal = (task) => {
     setSelectedTask(task);
     setResolutionComment('Issue repaired and verified on-site. Ready for administrator sign-off.');
+    setCompletionFile(null);
+    setCompletionFilePreview('');
     setCompleteModalOpen(true);
   };
 
-  // Action: Mark as Completed (Mark Resolved)
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompletionFile(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setCompletionFilePreview(ev.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setCompletionFilePreview('');
+    }
+  };
+
+  // Action: Mark as Completed (Mark Resolved + Upload Proof Photo)
   const handleCompleteTask = async (e) => {
     e.preventDefault();
     if (!selectedTask) return;
 
     setActionLoading(true);
     try {
+      let fileUrl = '';
+
+      // Upload resolution proof photo if selected
+      if (completionFile && supabase) {
+        try {
+          const sanitizedName = completionFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const filePath = `${selectedTask.id}/resolution_${Date.now()}_${sanitizedName}`;
+          const { error: storageErr } = await supabase.storage.from('complaints').upload(filePath, completionFile, {
+            contentType: completionFile.type,
+            upsert: true,
+          });
+          if (!storageErr) {
+            fileUrl = supabase.storage.from('complaints').getPublicUrl(filePath).data?.publicUrl || '';
+          }
+        } catch (stErr) {
+          console.warn('Storage upload notice:', stErr);
+        }
+
+        if (!fileUrl && completionFile.type.startsWith('image/')) {
+          fileUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target.result);
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(completionFile);
+          });
+        }
+
+        if (fileUrl) {
+          await supabase.from('complaint_evidence').insert({
+            complaint_id: selectedTask.id,
+            file_url: fileUrl,
+            file_type: completionFile.type,
+            file_name: completionFile.name,
+            uploaded_by: staffId,
+            evidence_type: 'resolution',
+          });
+        }
+      }
+
       // 1. Try Backend API
       try {
         await complaintApi.resolveComplaint(selectedTask.id, resolutionComment);
@@ -224,12 +280,14 @@ const StaffDashboard = () => {
           complaint_id: selectedTask.id,
           updated_by: staffId,
           status: 'resolved',
-          comment: `Building Incharge (${staffName}) marked task as completed. Remark: ${resolutionComment}`,
+          comment: `Building Incharge (${staffName}) marked task as completed with photo evidence. Remark: ${resolutionComment}`,
         });
       }
 
       setCompleteModalOpen(false);
       setSelectedTask(null);
+      setCompletionFile(null);
+      setCompletionFilePreview('');
       await loadAssignedTasks();
     } catch (err) {
       alert('Error completing task: ' + err.message);
@@ -541,6 +599,37 @@ const StaffDashboard = () => {
               className="w-full px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] focus:outline-hidden focus:border-[#168451]"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#17211B] mb-1.5">
+              Resolution Proof Evidence Photo (Optional but Recommended)
+            </label>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileSelect}
+              className="w-full px-3 py-2 bg-white border border-[#E1E9E2] rounded-xl text-xs text-[#17211B] file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-[#EAF6EE] file:text-[#168451] file:font-semibold cursor-pointer"
+            />
+            {completionFilePreview && (
+              <div className="mt-2 relative w-28 h-28 rounded-xl overflow-hidden border border-[#168451] bg-[#F7FAF7]">
+                <img src={completionFilePreview} alt="Resolution proof preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCompletionFile(null);
+                    setCompletionFilePreview('');
+                  }}
+                  className="absolute top-1 right-1 bg-black/60 text-white p-1 rounded-full text-[10px]"
+                  title="Remove image"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <p className="text-[11px] text-[#647168] mt-1">
+              Upload a photo showing the completed repair so the Administrator can verify and close the ticket.
+            </p>
           </div>
         </form>
       </Modal>

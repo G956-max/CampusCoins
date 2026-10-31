@@ -38,22 +38,36 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 /**
  * Specific Route Wrappers for Student, Staff, and Admin
  */
-export const StudentRoute = ({ children }) => (
-  <ProtectedRoute allowedRoles={[ROLES.STUDENT, ROLES.ADMIN]}>
-    {children}
-  </ProtectedRoute>
-);
+export const StudentRoute = ({ children }) => {
+  const { role } = useAuth();
+  if (role === ROLES.ADMIN) return <Navigate to="/admin/dashboard" replace />;
+  if (role === ROLES.STAFF) return <Navigate to="/staff/dashboard" replace />;
+  return (
+    <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+      {children}
+    </ProtectedRoute>
+  );
+};
 
-export const StaffRoute = ({ children }) => (
-  <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
-    {children}
-  </ProtectedRoute>
-);
+export const StaffRoute = ({ children }) => {
+  const { role } = useAuth();
+  if (role === ROLES.STUDENT) return <Navigate to="/student/dashboard" replace />;
+  return (
+    <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]}>
+      {children}
+    </ProtectedRoute>
+  );
+};
 
-export const AdminRoute = ({ children }) => (
-  <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-    {children}
-  </ProtectedRoute>
-);
+export const AdminRoute = ({ children }) => {
+  const { role } = useAuth();
+  if (role === ROLES.STUDENT) return <Navigate to="/student/dashboard" replace />;
+  if (role === ROLES.STAFF) return <Navigate to="/staff/dashboard" replace />;
+  return (
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+      {children}
+    </ProtectedRoute>
+  );
+};
 
 export default ProtectedRoute;

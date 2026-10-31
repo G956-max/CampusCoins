@@ -75,7 +75,16 @@ const LoginPage = () => {
       if (userRole === ROLES.STAFF) targetPath = '/staff/dashboard';
       if (userRole === ROLES.ADMIN) targetPath = '/admin/dashboard';
 
-      const destination = location.state?.from?.pathname || targetPath;
+      // Ensure Admin always lands on /admin/dashboard and Staff on /staff/dashboard
+      let destination = targetPath;
+      const stateFrom = location.state?.from?.pathname;
+      if (stateFrom && !stateFrom.startsWith('/student') && userRole === ROLES.ADMIN) {
+        destination = stateFrom;
+      } else if (stateFrom && !stateFrom.startsWith('/student') && userRole === ROLES.STAFF) {
+        destination = stateFrom;
+      } else if (stateFrom && userRole === ROLES.STUDENT) {
+        destination = stateFrom;
+      }
       navigate(destination, { replace: true });
     } catch (err) {
       setAuthError(err.message || 'Incorrect email or password.');
