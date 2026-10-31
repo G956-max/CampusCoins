@@ -198,6 +198,24 @@ const ReportIssuePage = () => {
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            let safeBuildingId = buildingId || null;
+            let safeFloorId = floorId || null;
+            let safeRoomId = roomId || null;
+
+            // Verify foreign key integrity before direct insert
+            if (safeFloorId) {
+              const { data: flr } = await supabase.from('floors').select('id').eq('id', safeFloorId).maybeSingle();
+              if (!flr) safeFloorId = null;
+            }
+            if (safeRoomId) {
+              const { data: rm } = await supabase.from('rooms').select('id').eq('id', safeRoomId).maybeSingle();
+              if (!rm) safeRoomId = null;
+            }
+            if (safeBuildingId) {
+              const { data: bld } = await supabase.from('buildings').select('id').eq('id', safeBuildingId).maybeSingle();
+              if (!bld) safeBuildingId = null;
+            }
+
             const { data: directData, error: directErr } = await supabase
               .from('complaints')
               .insert({
@@ -208,9 +226,9 @@ const ReportIssuePage = () => {
                 category: data.category,
                 priority: data.priority,
                 status: 'submitted',
-                building_id: buildingId || null,
-                floor_id: floorId || null,
-                room_id: roomId || null,
+                building_id: safeBuildingId,
+                floor_id: safeFloorId,
+                room_id: safeRoomId,
               })
               .select()
               .single();

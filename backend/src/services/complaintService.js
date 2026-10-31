@@ -158,28 +158,46 @@ class ComplaintService {
     const id = crypto.randomUUID();
     const trackingCode = `CC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const newComplaint = {
-      id,
-      tracking_code: trackingCode,
-      student_id: studentId,
-      title,
-      description,
-      category,
-      status: 'submitted',
-      priority: priority.toLowerCase(),
-      building_id: buildingId || null,
-      floor_id: floorId || null,
-      room_id: roomId || null,
-      general_location: generalLocation || null,
-      assigned_staff_id: null,
-      created_at: timestamp,
-      updated_at: timestamp,
-      resolved_at: null,
-    };
+    let safeBuildingId = buildingId || null;
+    let safeFloorId = floorId || null;
+    let safeRoomId = roomId || null;
 
     const supabase = getSupabaseClient(userToken);
     if (supabase) {
       try {
+        // Guard against Foreign Key constraint errors if referenced table rows do not exist
+        if (safeFloorId) {
+          const { data: flr } = await supabase.from('floors').select('id').eq('id', safeFloorId).maybeSingle();
+          if (!flr) safeFloorId = null;
+        }
+        if (safeRoomId) {
+          const { data: rm } = await supabase.from('rooms').select('id').eq('id', safeRoomId).maybeSingle();
+          if (!rm) safeRoomId = null;
+        }
+        if (safeBuildingId) {
+          const { data: bld } = await supabase.from('buildings').select('id').eq('id', safeBuildingId).maybeSingle();
+          if (!bld) safeBuildingId = null;
+        }
+
+        const newComplaint = {
+          id,
+          tracking_code: trackingCode,
+          student_id: studentId,
+          title,
+          description,
+          category,
+          status: 'submitted',
+          priority: priority.toLowerCase(),
+          building_id: safeBuildingId,
+          floor_id: safeFloorId,
+          room_id: safeRoomId,
+          general_location: generalLocation || null,
+          assigned_staff_id: null,
+          created_at: timestamp,
+          updated_at: timestamp,
+          resolved_at: null,
+        };
+
         const { data, error } = await supabase.from('complaints').insert(newComplaint).select().single();
         if (error) {
           logger.warn(`Supabase createComplaint notice: ${error.message}`);
@@ -199,8 +217,27 @@ class ComplaintService {
       }
     }
 
+    const inMemoryComplaint = {
+      id,
+      tracking_code: trackingCode,
+      student_id: studentId,
+      title,
+      description,
+      category,
+      status: 'submitted',
+      priority: priority.toLowerCase(),
+      building_id: safeBuildingId,
+      floor_id: safeFloorId,
+      room_id: safeRoomId,
+      general_location: generalLocation || null,
+      assigned_staff_id: null,
+      created_at: timestamp,
+      updated_at: timestamp,
+      resolved_at: null,
+    };
+
     // In-memory record
-    inMemoryComplaints.unshift(newComplaint);
+    inMemoryComplaints.unshift(inMemoryComplaint);
     inMemoryUpdates.push({
       id: `u-${Date.now()}`,
       complaint_id: id,
