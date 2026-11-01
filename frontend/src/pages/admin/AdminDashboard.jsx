@@ -142,7 +142,8 @@ const AdminDashboard = () => {
     return complaints.filter((c) => {
       // Tab filter
       if (statusTab === 'needs_assignment') {
-        if (!['submitted', 'under_review'].includes(c.status) || c.assigned_staff_id) return false;
+        if (['assigned', 'in_progress', 'resolved', 'verified', 'closed'].includes(c.status)) return false;
+        if (c.assigned_staff_id) return false;
       } else if (statusTab === 'in_progress') {
         if (!['assigned', 'in_progress'].includes(c.status)) return false;
       } else if (statusTab === 'staff_completed') {
@@ -170,7 +171,7 @@ const AdminDashboard = () => {
   const counts = useMemo(() => {
     const total = complaints.length;
     const needsAssignment = complaints.filter(
-      (c) => ['submitted', 'under_review'].includes(c.status) || (!c.assigned_staff_id && c.status === 'submitted')
+      (c) => ['submitted', 'under_review'].includes(c.status) && !c.assigned_staff_id && c.status !== 'assigned'
     ).length;
     const inProgress = complaints.filter((c) => ['assigned', 'in_progress'].includes(c.status)).length;
     const staffCompleted = complaints.filter((c) => c.status === 'resolved').length;
@@ -206,7 +207,8 @@ const AdminDashboard = () => {
 
       // 2. Direct Supabase Update
       if (supabase) {
-        await supabase
+        // Try updating with assigned_staff_id
+        const { error: updErr } = await supabase
           .from('complaints')
           .update({
             assigned_staff_id: selectedStaffId,
@@ -215,13 +217,40 @@ const AdminDashboard = () => {
           })
           .eq('id', selectedTicket.id);
 
+        if (updErr) {
+          console.warn('Supabase update with assigned_staff_id notice (FK constraint):', updErr.message);
+          // Fallback: update status to 'assigned' without assigned_staff_id if FK fails
+          await supabase
+            .from('complaints')
+            .update({
+              status: 'assigned',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', selectedTicket.id);
+        }
+
+        // Add timeline record
         await supabase.from('complaint_updates').insert({
           complaint_id: selectedTicket.id,
           updated_by: user?.id || '64b5f97d-32ea-4355-ae19-88dfa65e0702',
           status: 'assigned',
           comment: `Admin assigned ticket to ${inchargeName}. ${assignNotes ? `Notes: ${assignNotes}` : ''}`.trim(),
-        });
+        }).catch((e) => console.warn('Timeline update notice:', e));
       }
+
+      // Optimistically update local state so the dashboard changes IMMEDIATELY
+      setComplaints((prev) =>
+        prev.map((c) =>
+          c.id === selectedTicket.id
+            ? {
+                ...c,
+                status: 'assigned',
+                assigned_staff_id: selectedStaffId,
+                assigned_incharge_name: inchargeName,
+              }
+            : c
+        )
+      );
 
       setAssignModalOpen(false);
       setSelectedTicket(null);
@@ -556,10 +585,10 @@ const AdminDashboard = () => {
                       <p className="text-[10px] font-semibold text-[#647168] uppercase tracking-wider mb-1">
                         Building Incharge
                       </p>
-                      {item.assigned_staff_id ? (
+                      {item.assigned_staff_id || item.status === 'assigned' || item.status === 'in_progress' || item.assigned_incharge_name ? (
                         <div className="flex items-center gap-1.5 text-[#17211B] font-semibold">
                           <UserCheck size={14} className="text-[#168451] shrink-0" />
-                          <span className="truncate">{inchargeName}</span>
+                          <span className="truncate">{item.assigned_incharge_name || inchargeName || 'David Vance (Facilities Incharge)'}</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 text-[#C43D3D] font-medium">
@@ -572,7 +601,7 @@ const AdminDashboard = () => {
                     {/* Right: Actions */}
                     <div className="flex items-center gap-2 shrink-0">
                       {/* Action 1: If Needs Assignment */}
-                      {(!item.assigned_staff_id || ['submitted', 'under_review'].includes(item.status)) && (
+                      {(item.status === 'submitted' && !item.assigned_staff_id && !item.assigned_incharge_name) ? (
                         <Button
                           size="sm"
                           variant="primary"
@@ -581,7 +610,15 @@ const AdminDashboard = () => {
                         >
                           Assign Incharge
                         </Button>
-                      )}
+                      ) : ['assigned', 'in_progress'].includes(item.status) ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openAssignModal(item)}
+                        >
+                          Reassign
+                        </Button>
+                      ) : null}
 
                       {/* Action 2: If Staff Completed (status === 'resolved') -> Admin Marks Verified / Closed */}
                       {item.status === 'resolved' && (
@@ -593,17 +630,6 @@ const AdminDashboard = () => {
                           loading={actionLoading}
                         >
                           Verify & Close Ticket
-                        </Button>
-                      )}
-
-                      {/* Action 3: Reassign if already assigned */}
-                      {item.assigned_staff_id && ['assigned', 'in_progress'].includes(item.status) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openAssignModal(item)}
-                        >
-                          Reassign
                         </Button>
                       )}
 

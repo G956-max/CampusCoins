@@ -30,6 +30,13 @@ CREATE POLICY "Students insert complaints" ON public.complaints FOR INSERT WITH 
 DROP POLICY IF EXISTS "Public read complaints" ON public.complaints;
 CREATE POLICY "Public read complaints" ON public.complaints FOR SELECT USING (true);
 
+-- Remove restrictive FK constraints so building incharges can be assigned directly
+ALTER TABLE public.complaints DROP CONSTRAINT IF EXISTS complaints_assigned_staff_id_fkey;
+ALTER TABLE public.complaint_assignments DROP CONSTRAINT IF EXISTS complaint_assignments_staff_id_fkey;
+
+DROP POLICY IF EXISTS "Public update complaints" ON public.complaints;
+CREATE POLICY "Public update complaints" ON public.complaints FOR UPDATE USING (true) WITH CHECK (true);
+
 DROP POLICY IF EXISTS "Public manage complaint_evidence" ON public.complaint_evidence;
 CREATE POLICY "Public manage complaint_evidence" ON public.complaint_evidence FOR ALL USING (true);
 
