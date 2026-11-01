@@ -67,17 +67,11 @@ const AdminDashboard = () => {
     try {
       let list = [];
 
-      // 1. Try Backend API
-      try {
-        const res = await complaintApi.getAllComplaints({ limit: 100 });
-        const data = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
-        if (data.length > 0) list = data;
-      } catch (apiErr) {
-        console.warn('Backend API getAllComplaints notice:', apiErr);
-      }
+      let supaList = [];
+      let apiList = [];
 
-      // 2. Direct Supabase Query (Robust fallback)
-      if (list.length === 0 && supabase) {
+      // 1. Direct Supabase Query
+      if (supabase) {
         try {
           const { data: supaComplaints, error: supaErr } = await supabase
             .from('complaints')
@@ -90,41 +84,61 @@ const AdminDashboard = () => {
             `)
             .order('created_at', { ascending: false });
 
-          if (!supaErr && supaComplaints) {
-            // Also fetch evidence for complaints
-            const complaintIds = supaComplaints.map((c) => c.id);
-            let evidenceMap = {};
-            if (complaintIds.length > 0) {
-              const { data: evList } = await supabase
-                .from('complaint_evidence')
-                .select('*')
-                .in('complaint_id', complaintIds);
-              if (evList) {
-                evList.forEach((ev) => {
-                  if (!evidenceMap[ev.complaint_id]) evidenceMap[ev.complaint_id] = [];
-                  evidenceMap[ev.complaint_id].push(ev);
-                });
-              }
-            }
-
-            list = supaComplaints.map((c) => ({
-              ...c,
-              evidence: evidenceMap[c.id] || [],
-            }));
+          if (!supaErr && Array.isArray(supaComplaints)) {
+            supaList = supaComplaints;
           } else {
-            // Simple fallback without joins
             const { data: simpleData } = await supabase
               .from('complaints')
               .select('*')
               .order('created_at', { ascending: false });
-            if (simpleData) list = simpleData;
+            if (simpleData) supaList = simpleData;
           }
         } catch (supaCatch) {
           console.warn('Direct Supabase fetch catch:', supaCatch);
         }
       }
 
-      setComplaints(list);
+      // 2. Backend API
+      try {
+        const res = await complaintApi.getAllComplaints({ limit: 100 });
+        const data = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        if (data.length > 0) apiList = data;
+      } catch (apiErr) {
+        console.warn('Backend API getAllComplaints notice:', apiErr);
+      }
+
+      // Merge both (Supabase authoritative)
+      const mergedMap = new Map();
+      apiList.forEach((c) => mergedMap.set(c.id, c));
+      supaList.forEach((c) => mergedMap.set(c.id, { ...(mergedMap.get(c.id) || {}), ...c }));
+      let combined = Array.from(mergedMap.values());
+
+      // 3. Always fetch evidence from complaint_evidence for all complaints
+      if (combined.length > 0 && supabase) {
+        try {
+          const complaintIds = combined.map((c) => c.id).filter(Boolean);
+          const { data: evList } = await supabase
+            .from('complaint_evidence')
+            .select('*')
+            .in('complaint_id', complaintIds);
+
+          if (evList && evList.length > 0) {
+            const evidenceMap = {};
+            evList.forEach((ev) => {
+              if (!evidenceMap[ev.complaint_id]) evidenceMap[ev.complaint_id] = [];
+              evidenceMap[ev.complaint_id].push(ev);
+            });
+            combined = combined.map((c) => ({
+              ...c,
+              evidence: (evidenceMap[c.id] && evidenceMap[c.id].length > 0) ? evidenceMap[c.id] : (c.evidence || []),
+            }));
+          }
+        } catch (evErr) {
+          console.warn('Admin evidence fetch error:', evErr);
+        }
+      }
+
+      setComplaints(combined);
     } catch (err) {
       console.error('Failed to load complaints:', err);
       setError('Failed to load campus complaints.');

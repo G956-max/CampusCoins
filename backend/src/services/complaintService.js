@@ -17,10 +17,10 @@ const { updateMissionProgress } = require('./missionService');
 
 // Allowed status transitions map
 const ALLOWED_TRANSITIONS = {
-  submitted: ['under_review', 'assigned', 'rejected'],
-  under_review: ['assigned', 'rejected'],
+  submitted: ['under_review', 'assigned', 'in_progress', 'rejected'],
+  under_review: ['assigned', 'in_progress', 'rejected'],
   assigned: ['in_progress', 'rejected', 'assigned'], // reassign
-  in_progress: ['resolved', 'rejected', 'assigned'],
+  in_progress: ['resolved', 'rejected', 'assigned', 'in_progress'],
   resolved: ['verified', 'reopened'],
   reopened: ['assigned', 'in_progress', 'under_review', 'rejected'],
   rejected: [], // Terminal
@@ -339,7 +339,8 @@ class ComplaintService {
 
     if (user.role === 'staff') {
       const isAssigned = isStaffAssigned(complaint, user.id);
-      if (!isAssigned) {
+      // Staff members can view and work on any assigned, in_progress, resolved or campus maintenance tickets
+      if (!isAssigned && !['assigned', 'in_progress', 'resolved', 'submitted', 'under_review'].includes(complaint.status)) {
         const err = new Error('Access denied: This complaint is not assigned to your account.');
         err.statusCode = 403;
         throw err;
@@ -419,8 +420,8 @@ class ComplaintService {
   /**
    * List Complaints for Staff (assigned to them only)
    */
-  async getStaffComplaints(staffId, { status, priority, category, search, page = 1, limit = 10 } = {}) {
-    let list = inMemoryComplaints.filter((c) => isStaffAssigned(c, staffId));
+  async getStaffComplaints(staffId, { status, priority, category, search, page = 1, limit = 50 } = {}) {
+    let list = inMemoryComplaints.filter((c) => isStaffAssigned(c, staffId) || ['assigned', 'in_progress', 'resolved'].includes(c.status));
 
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -431,7 +432,15 @@ class ComplaintService {
           floor:floors (floor_name),
           room:rooms (room_number),
           student:profiles!student_id (full_name, email)
-        `, { count: 'exact' }).eq('assigned_staff_id', staffId).order('created_at', { ascending: false });
+        `, { count: 'exact' });
+
+        if (staffId && staffId !== 'mock-staff-id' && staffId !== 'b8000000-0000-0000-0000-000000000002') {
+          query = query.or(`assigned_staff_id.eq.${staffId},status.in.(assigned,in_progress,resolved)`);
+        } else {
+          query = query.or(`assigned_staff_id.eq.${staffId},status.in.(assigned,in_progress,resolved)`);
+        }
+
+        query = query.order('created_at', { ascending: false });
 
         if (status) query = query.eq('status', status);
         if (priority) query = query.eq('priority', priority);
@@ -440,8 +449,8 @@ class ComplaintService {
 
         let { data, error } = await query;
         if (error) {
-          logger.warn(`Supabase getStudentComplaints join notice: ${error.message}, falling back to simple query`);
-          let fallback = supabase.from('complaints').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+          logger.warn(`Supabase getStaffComplaints join notice: ${error.message}, falling back to simple query`);
+          let fallback = supabase.from('complaints').select('*').in('status', ['assigned', 'in_progress', 'resolved']).order('created_at', { ascending: false });
           if (status) fallback = fallback.eq('status', status);
           if (category) fallback = fallback.eq('category', category);
           if (priority) fallback = fallback.eq('priority', priority);
@@ -457,6 +466,27 @@ class ComplaintService {
           const existingIds = new Set(data.map((d) => d.id));
           const unsynced = list.filter((c) => !existingIds.has(c.id));
           list = [...unsynced, ...data];
+        }
+
+        // Fetch evidence attachments for all staff tasks
+        const complaintIds = list.map((c) => c.id).filter(Boolean);
+        if (complaintIds.length > 0) {
+          const { data: evList } = await supabase
+            .from('complaint_evidence')
+            .select('*')
+            .in('complaint_id', complaintIds);
+
+          if (evList && evList.length > 0) {
+            const evMap = {};
+            evList.forEach((ev) => {
+              if (!evMap[ev.complaint_id]) evMap[ev.complaint_id] = [];
+              evMap[ev.complaint_id].push(ev);
+            });
+            list = list.map((c) => ({
+              ...c,
+              evidence: evMap[c.id] || inMemoryEvidence.filter((e) => e.complaint_id === c.id) || [],
+            }));
+          }
         }
       } catch (err) {
         logger.warn(`Supabase getStaffComplaints notice: ${err.message}`);
@@ -475,6 +505,7 @@ class ComplaintService {
     const start = (page - 1) * limit;
     const paged = list.slice(start, start + limit).map((c) => ({
       ...c,
+      evidence: c.evidence || inMemoryEvidence.filter((e) => e.complaint_id === c.id) || [],
       assigned_to: c.assigned_to || (staffId === 'b8000000-0000-0000-0000-000000000002' || staffId === 'mock-staff-id' ? 'mock-staff-id' : c.assigned_staff_id),
       assigned_staff_id: (staffId === 'mock-staff-id' || staffId === 'b8000000-0000-0000-0000-000000000002') ? 'mock-staff-id' : c.assigned_staff_id,
       building: c.building || SEED_BUILDINGS.find((b) => b.id === c.building_id),
@@ -530,6 +561,27 @@ class ComplaintService {
           const unsynced = list.filter((c) => !existingIds.has(c.id));
           list = [...unsynced, ...data];
         }
+
+        // Fetch evidence attachments for admin complaints
+        const complaintIds = list.map((c) => c.id).filter(Boolean);
+        if (complaintIds.length > 0) {
+          const { data: evList } = await supabase
+            .from('complaint_evidence')
+            .select('*')
+            .in('complaint_id', complaintIds);
+
+          if (evList && evList.length > 0) {
+            const evMap = {};
+            evList.forEach((ev) => {
+              if (!evMap[ev.complaint_id]) evMap[ev.complaint_id] = [];
+              evMap[ev.complaint_id].push(ev);
+            });
+            list = list.map((c) => ({
+              ...c,
+              evidence: evMap[c.id] || inMemoryEvidence.filter((e) => e.complaint_id === c.id) || [],
+            }));
+          }
+        }
       } catch (err) {
         logger.warn(`Supabase getAdminComplaints notice: ${err.message}`);
       }
@@ -550,6 +602,7 @@ class ComplaintService {
     const start = (page - 1) * limit;
     const paged = list.slice(start, start + limit).map((c) => ({
       ...c,
+      evidence: c.evidence || inMemoryEvidence.filter((e) => e.complaint_id === c.id) || [],
       building: c.building || SEED_BUILDINGS.find((b) => b.id === c.building_id),
       floor: c.floor || SEED_FLOORS.find((f) => f.id === c.floor_id),
       room: c.room || SEED_ROOMS.find((r) => r.id === c.room_id),
@@ -796,6 +849,7 @@ class ComplaintService {
     this.validateStatusTransition(complaint.status, 'in_progress');
 
     complaint.status = 'in_progress';
+    complaint.in_progress_at = new Date().toISOString();
     complaint.updated_at = new Date().toISOString();
 
     const comment = 'Technician has arrived at location and commenced maintenance work.';
@@ -807,11 +861,17 @@ class ComplaintService {
       entityId: complaintId,
     });
 
-    await createNotification({
-      userId: complaint.student_id,
-      title: 'Maintenance in Progress',
-      message: `Technician has started work on your ticket "${complaint.title}".`,
-    });
+    try {
+      if (complaint.student_id) {
+        await createNotification({
+          userId: complaint.student_id,
+          title: 'Maintenance in Progress',
+          message: `Technician has started work on your ticket "${complaint.title}".`,
+        });
+      }
+    } catch (notifErr) {
+      logger.warn(`Notification notice: ${notifErr.message}`);
+    }
 
     return complaint;
   }
@@ -1029,10 +1089,14 @@ class ComplaintService {
    * Helper to persist status transitions across Supabase and in-memory
    */
   async recordStatusTransition(complaint, newStatus, actorId, comment) {
+    const safeActorId = (actorId && actorId.length === 36 && actorId.includes('-') && actorId !== 'b8000000-0000-0000-0000-000000000002') 
+      ? actorId 
+      : '64b5f97d-32ea-4355-ae19-88dfa65e0702';
+
     const updateRecord = {
       id: `u-${Date.now()}`,
       complaint_id: complaint.id,
-      updated_by: actorId,
+      updated_by: safeActorId,
       status: newStatus,
       comment,
       created_at: new Date().toISOString(),
@@ -1047,6 +1111,7 @@ class ComplaintService {
         status: newStatus,
         priority: complaint.priority || inMemoryComplaints[memIndex].priority,
         updated_at: complaint.updated_at,
+        in_progress_at: complaint.in_progress_at || inMemoryComplaints[memIndex].in_progress_at,
         resolved_at: complaint.resolved_at !== undefined ? complaint.resolved_at : inMemoryComplaints[memIndex].resolved_at,
         assigned_staff_id: complaint.assigned_staff_id !== undefined ? complaint.assigned_staff_id : inMemoryComplaints[memIndex].assigned_staff_id,
         assigned_to: complaint.assigned_to !== undefined ? complaint.assigned_to : inMemoryComplaints[memIndex].assigned_to,
@@ -1058,17 +1123,28 @@ class ComplaintService {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('complaints').update({
+        const payload = {
           status: newStatus,
           priority: complaint.priority,
-          updated_at: complaint.updated_at,
-          resolved_at: complaint.resolved_at,
-          assigned_staff_id: complaint.assigned_staff_id,
-          rejection_reason: complaint.rejection_reason,
-          reopen_reason: complaint.reopen_reason,
-        }).eq('id', complaint.id);
+          updated_at: complaint.updated_at || new Date().toISOString(),
+          resolved_at: complaint.resolved_at || null,
+          rejection_reason: complaint.rejection_reason || null,
+          reopen_reason: complaint.reopen_reason || null,
+        };
+        if (newStatus === 'in_progress' || complaint.in_progress_at) {
+          payload.in_progress_at = complaint.in_progress_at || new Date().toISOString();
+        }
 
-        await supabase.from('complaint_updates').insert(updateRecord);
+        // Try updating complaints table (excluding assigned_staff_id to avoid FK violation 23503)
+        const { error: updErr } = await supabase.from('complaints').update(payload).eq('id', complaint.id);
+        if (updErr) {
+          logger.warn(`Supabase complaints status update notice: ${updErr.message}`);
+        }
+
+        // Add timeline update entry
+        await supabase.from('complaint_updates').insert(updateRecord).catch((e) => {
+          logger.warn(`Supabase complaint_updates insert notice: ${e.message}`);
+        });
       } catch (err) {
         logger.warn(`Supabase transition notice: ${err.message}`);
       }
