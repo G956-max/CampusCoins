@@ -24,6 +24,7 @@ router.post('/ai-classify', aiClassify);
 
 // Student specific endpoints
 router.post('/', requireRole(['student']), actionLimiter, createComplaint);
+router.get('/', requireRole(['student']), getMyComplaints);
 router.get('/my', requireRole(['student']), getMyComplaints);
 router.get('/:id', getComplaintDetails); // Permissions verified inside controller
 router.post('/:id/evidence', upload.single('file'), validateFileSize, uploadEvidence);

@@ -94,6 +94,10 @@ export const complaintApi = {
     const res = await api.post(`/api/admin/complaints/${id}/review`);
     return res;
   },
+  verifyComplaint: async (id, payload = {}) => {
+    const res = await api.post(`/api/admin/complaints/${id}/verify`, payload);
+    return res;
+  },
   rejectComplaint: async (id, rejectionReason) => {
     const res = await api.post(`/api/admin/complaints/${id}/reject`, {
       rejection_reason: rejectionReason,

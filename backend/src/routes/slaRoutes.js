@@ -12,6 +12,7 @@ const router = express.Router();
 router.use(verifyAuth, requireRole(['admin']));
 
 router.get('/', getSlaReport);
+router.get('/overview', getSlaReport);
 router.get('/rules', getRules);
 router.put('/rules', updateRules);
 router.post('/check-escalations', triggerEscalationCheck);

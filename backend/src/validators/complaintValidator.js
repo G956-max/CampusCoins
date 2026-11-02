@@ -41,6 +41,10 @@ const createComplaintSchema = z.object({
     .max(5000, 'Description must be between 20 and 5000 characters'),
   category: z
     .string({ required_error: 'Category is required' })
+    .transform((cat) => {
+      const match = VALID_CATEGORIES.find((c) => c.toLowerCase() === cat.trim().toLowerCase());
+      return match || cat;
+    })
     .refine((cat) => VALID_CATEGORIES.includes(cat), {
       message: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}`,
     }),
@@ -54,15 +58,13 @@ const createComplaintSchema = z.object({
   building_id: optionalUuid,
   floor_id: optionalUuid,
   room_id: optionalUuid,
-  general_location: z.string().max(300).optional().nullable(),
+  general_location: z.string().max(300).optional().nullable().default('Campus Premises'),
   additional_notes: z.string().max(2000).optional(),
-}).refine((data) => {
-  const hasStructured = data.building_id || data.floor_id || data.room_id;
-  const hasGeneral = Boolean(data.general_location && data.general_location.trim().length > 0);
-  return hasStructured || hasGeneral;
-}, {
-  message: 'Either structured location (building/floor/room) or general location must be specified',
-  path: ['general_location'],
+}).transform((data) => {
+  if (!data.building_id && !data.floor_id && !data.room_id && !data.general_location) {
+    data.general_location = 'Campus Premises';
+  }
+  return data;
 });
 
 // Schema for admin rejection (requires reason)

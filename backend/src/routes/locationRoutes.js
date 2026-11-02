@@ -10,6 +10,7 @@ const {
 
 const router = express.Router();
 
+router.get('/', getBuildings);
 router.get('/buildings', getBuildings);
 router.get('/floors', getFloors);
 router.get('/rooms', getRooms);

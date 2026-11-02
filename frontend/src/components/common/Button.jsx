@@ -5,6 +5,8 @@ import LoadingSpinner from './LoadingSpinner';
 const variantClasses = {
   primary:
     'bg-[#168451] hover:bg-[#116B42] text-white font-medium shadow-sm hover:shadow active:scale-[0.98]',
+  success:
+    'bg-[#168451] hover:bg-[#116B42] text-white font-medium shadow-sm hover:shadow active:scale-[0.98]',
   secondary:
     'bg-[#EAF6EE] hover:bg-[#CBE7D4] text-[#168451] border border-[#E1E9E2] font-medium active:scale-[0.98]',
   brand:
@@ -31,6 +33,7 @@ const Button = React.forwardRef(
       variant = 'primary',
       size = 'md',
       isLoading = false,
+      loading = false,
       disabled = false,
       leftIcon,
       rightIcon,
@@ -39,11 +42,12 @@ const Button = React.forwardRef(
     },
     ref
   ) => {
+    const isBusy = isLoading || loading;
     return (
       <button
         ref={ref}
         type={type}
-        disabled={disabled || isLoading}
+        disabled={disabled || isBusy}
         className={cn(
           'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#168451]/30 focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
           variantClasses[variant] || variantClasses.primary,
@@ -52,7 +56,7 @@ const Button = React.forwardRef(
         )}
         {...props}
       >
-        {isLoading ? (
+        {isBusy ? (
           <>
             <LoadingSpinner size="sm" color={variant === 'outline' || variant === 'ghost' ? 'text-[#168451]' : 'text-white'} />
             <span>{children}</span>

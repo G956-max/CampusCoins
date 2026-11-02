@@ -12,6 +12,7 @@ const router = express.Router();
 router.use(verifyAuth, requireRole(['admin']));
 
 router.get('/', getInstitutionalAnalytics);
+router.get('/summary', getInstitutionalAnalytics);
 router.get('/export', exportComplaintsCsv);
 router.get('/export-csv', exportComplaintsCsv);
 router.post('/ai-assistant', handleAiAssistantQuery);

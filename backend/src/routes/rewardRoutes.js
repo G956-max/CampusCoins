@@ -14,6 +14,7 @@ router.use(verifyAuth);
 
 router.get('/', getAvailableRewards);
 router.get('/redemptions', getMyRedemptions);
+router.get('/my-redemptions', getMyRedemptions);
 router.post('/:id/redeem', actionLimiter, redeemReward);
 router.post('/verify-voucher', requireRole(['staff', 'admin']), verifyVoucher);
 

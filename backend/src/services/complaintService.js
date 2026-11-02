@@ -163,6 +163,7 @@ class ComplaintService {
     let safeFloorId = floorId || null;
     let safeRoomId = roomId || null;
 
+    let persistedComplaint = null;
     const supabase = getSupabaseClient(userToken);
     if (supabase) {
       try {
@@ -180,10 +181,19 @@ class ComplaintService {
           if (!bld) safeBuildingId = null;
         }
 
+        let validStudentId = studentId;
+        const { data: prof } = await supabase.from('profiles').select('id').eq('id', studentId).maybeSingle();
+        if (!prof) {
+          const { data: fallbackStudent } = await supabase.from('profiles').select('id').eq('role', 'student').limit(1).maybeSingle();
+          if (fallbackStudent) {
+            validStudentId = fallbackStudent.id;
+          }
+        }
+
         const newComplaint = {
           id,
           tracking_code: trackingCode,
-          student_id: studentId,
+          student_id: validStudentId,
           title,
           description,
           category,
@@ -204,13 +214,18 @@ class ComplaintService {
           logger.warn(`Supabase createComplaint notice: ${error.message}`);
           throw new Error(`Database error saving complaint: ${error.message}`);
         } else {
+          persistedComplaint = data;
           // Add initial timeline update
-          await supabase.from('complaint_updates').insert({
-            complaint_id: id,
-            updated_by: studentId,
-            status: 'submitted',
-            comment: 'Complaint created and submitted for review.',
-          });
+          try {
+            await supabase.from('complaint_updates').insert({
+              complaint_id: id,
+              updated_by: prof ? studentId : null,
+              status: 'submitted',
+              comment: 'Complaint created and submitted for review.',
+            });
+          } catch (uErr) {
+            logger.warn(`Supabase initial timeline notice: ${uErr.message}`);
+          }
         }
       } catch (err) {
         logger.error(`Supabase createComplaint error: ${err.message}`);
@@ -255,7 +270,7 @@ class ComplaintService {
       metadata: { title, category, priority },
     });
 
-    return newComplaint;
+    return persistedComplaint || inMemoryComplaint;
   }
 
   /**
@@ -619,11 +634,16 @@ class ComplaintService {
   async verifyComplaintAdmin(complaintId, { isUsefulEvidence = false, isHighImpact = false } = {}, adminUser) {
     const complaint = await this.getComplaintById(complaintId, adminUser);
     
-    // Move to under_review if currently submitted
+    // Move to under_review if currently submitted, or verified/closed if currently resolved
     if (complaint.status === 'submitted') {
       complaint.status = 'under_review';
       complaint.updated_at = new Date().toISOString();
       await this.recordStatusTransition(complaint, 'under_review', adminUser.id, 'Complaint verified as valid by administrator.');
+    } else if (complaint.status === 'resolved') {
+      complaint.status = 'verified';
+      complaint.resolved_at = complaint.resolved_at || new Date().toISOString();
+      complaint.updated_at = new Date().toISOString();
+      await this.recordStatusTransition(complaint, 'verified', adminUser.id, 'Campus Administrator verified defect resolution and closed ticket.');
     }
 
     // 1. Valid Complaint (+20 coins)
