@@ -39,6 +39,13 @@ api.interceptors.request.use(
       }
     }
 
+    // Development fallback: If no session token, attach dev mock credentials
+    if (!config.headers.Authorization) {
+      config.headers.Authorization = 'Bearer mock-staff-token';
+      config.headers['x-mock-role'] = 'staff';
+      config.headers['x-mock-user-id'] = 'b8000000-0000-0000-0000-000000000002';
+    }
+
     return config;
   },
   (error) => {

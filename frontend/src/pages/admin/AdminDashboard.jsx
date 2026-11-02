@@ -149,6 +149,21 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     loadComplaints();
+
+    // Auto-sync when staff marks task completed or status changes
+    let channel = null;
+    if (supabase) {
+      channel = supabase
+        .channel('admin_complaints_realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints' }, () => {
+          loadComplaints();
+        })
+        .subscribe();
+    }
+
+    return () => {
+      if (channel && supabase) supabase.removeChannel(channel);
+    };
   }, []);
 
   // Filter complaints based on active Tab and Search

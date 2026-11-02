@@ -17,14 +17,15 @@ const { updateMissionProgress } = require('./missionService');
 
 // Allowed status transitions map
 const ALLOWED_TRANSITIONS = {
-  submitted: ['under_review', 'assigned', 'in_progress', 'rejected'],
-  under_review: ['assigned', 'in_progress', 'rejected'],
-  assigned: ['in_progress', 'rejected', 'assigned'], // reassign
+  submitted: ['under_review', 'assigned', 'in_progress', 'resolved', 'rejected'],
+  under_review: ['assigned', 'in_progress', 'resolved', 'rejected'],
+  assigned: ['in_progress', 'resolved', 'rejected', 'assigned'], // allow direct resolution
   in_progress: ['resolved', 'rejected', 'assigned', 'in_progress'],
-  resolved: ['verified', 'reopened'],
-  reopened: ['assigned', 'in_progress', 'under_review', 'rejected'],
+  resolved: ['verified', 'reopened', 'closed'],
+  reopened: ['assigned', 'in_progress', 'under_review', 'resolved', 'rejected'],
   rejected: [], // Terminal
-  verified: [], // Terminal / Closed
+  verified: ['closed'], // Terminal / Closed
+  closed: [],
 };
 
 /**
@@ -543,8 +544,8 @@ class ComplaintService {
 
         let { data, error } = await query;
         if (error) {
-          logger.warn(`Supabase getStudentComplaints join notice: ${error.message}, falling back to simple query`);
-          let fallback = supabase.from('complaints').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+          logger.warn(`Supabase getAdminComplaints join notice: ${error.message}, falling back to simple query`);
+          let fallback = supabase.from('complaints').select('*').order('created_at', { ascending: false });
           if (status) fallback = fallback.eq('status', status);
           if (category) fallback = fallback.eq('category', category);
           if (priority) fallback = fallback.eq('priority', priority);
@@ -924,6 +925,7 @@ class ComplaintService {
     const timestamp = new Date().toISOString();
     complaint.status = 'resolved';
     complaint.resolved_at = timestamp;
+    complaint.resolution_comment = resolutionComment;
     complaint.updated_at = timestamp;
 
     const comment = `Work completed by technician: ${resolutionComment}`;
@@ -936,12 +938,18 @@ class ComplaintService {
       metadata: { resolutionComment },
     });
 
-    await createNotification({
-      userId: complaint.student_id,
-      title: 'Issue Marked as Resolved',
-      message: `Maintenance finished for "${complaint.title}". Please verify if the issue is actually resolved.`,
-      type: 'action_required',
-    });
+    try {
+      if (complaint.student_id) {
+        await createNotification({
+          userId: complaint.student_id,
+          title: 'Issue Marked as Resolved',
+          message: `Maintenance finished for "${complaint.title}". Please verify if the issue is actually resolved.`,
+          type: 'action_required',
+        });
+      }
+    } catch (notifErr) {
+      logger.warn(`Notification notice: ${notifErr.message}`);
+    }
 
     return complaint;
   }
@@ -1127,7 +1135,8 @@ class ComplaintService {
           status: newStatus,
           priority: complaint.priority,
           updated_at: complaint.updated_at || new Date().toISOString(),
-          resolved_at: complaint.resolved_at || null,
+          resolved_at: complaint.resolved_at || (newStatus === 'resolved' ? new Date().toISOString() : null),
+          resolution_comment: complaint.resolution_comment || null,
           rejection_reason: complaint.rejection_reason || null,
           reopen_reason: complaint.reopen_reason || null,
         };
