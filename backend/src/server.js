@@ -79,9 +79,9 @@ app.use(notFoundHandler);
 // Centralized Error Handler
 app.use(errorHandler);
 
-// Start Server if not on Vercel and not loaded as module in another runner
+// Start Server if run directly (and not on Vercel or required as a serverless module)
 let server = null;
-if (!process.env.VERCEL && (process.env.NODE_ENV !== 'test' || require.main === module)) {
+if (!process.env.VERCEL && require.main === module) {
   server = app.listen(config.port, () => {
     logger.info(`=========================================`);
     logger.info(` CampusCoins API Server started!`);
