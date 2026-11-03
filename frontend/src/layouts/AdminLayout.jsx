@@ -38,7 +38,7 @@ const AdminLayout = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen lg:pl-64">
         {/* Mobile Header (< lg) */}
         <div className="lg:hidden shrink-0">
           <MobileHeader title="Admin Portal" onOpenMenu={() => setMobileSidebarOpen(true)} />

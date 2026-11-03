@@ -44,11 +44,13 @@ const Sidebar = ({ role = ROLES.STUDENT, isMobile = false, onClose }) => {
     <aside
       className={cn(
         'flex flex-col bg-white border-r border-[#E1E9E2] text-[#17211B]',
-        isMobile ? 'w-full h-full' : 'w-64 shrink-0 hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto'
+        isMobile
+          ? 'w-full h-full'
+          : 'w-64 shrink-0 hidden lg:flex lg:fixed lg:top-0 lg:left-0 lg:bottom-0 lg:z-30 h-screen'
       )}
     >
       {/* Brand & Platform Tag */}
-      <div className="p-4 sm:p-5 border-b border-[#E1E9E2] flex items-center justify-between">
+      <div className="p-4 sm:p-5 border-b border-[#E1E9E2] flex items-center justify-between shrink-0">
         <NavLink to="/" onClick={handleNavClick} className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#168451] flex items-center justify-center text-white shadow-sm">
             <Coins size={20} className="stroke-[2.5]" />
@@ -121,7 +123,7 @@ const Sidebar = ({ role = ROLES.STUDENT, isMobile = false, onClose }) => {
       </div>
 
       {/* User Info & Profile at Bottom */}
-      <div className="p-3 border-t border-[#E1E9E2] bg-[#F7FAF7]/60">
+      <div className="p-3 border-t border-[#E1E9E2] bg-[#F7FAF7]/60 shrink-0">
         <Link
           to={getProfilePath()}
           onClick={handleNavClick}

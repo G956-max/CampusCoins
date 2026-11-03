@@ -42,7 +42,7 @@ const StudentLayout = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen lg:pl-64">
         {/* Mobile Header (< lg) - Fixed at top */}
         <div className="lg:hidden shrink-0">
           <MobileHeader onOpenMenu={() => setMobileSidebarOpen(true)} />
