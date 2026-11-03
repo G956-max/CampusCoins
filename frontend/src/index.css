@@ -16,10 +16,19 @@
     --campus-danger: #C43D3D;
   }
 
+  html {
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
   body {
+    min-height: 100%;
     background-color: #F7FAF7;
     color: #17211B;
     overflow-x: hidden;
+    overflow-y: auto;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }

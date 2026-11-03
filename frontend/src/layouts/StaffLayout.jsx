@@ -16,7 +16,7 @@ const StaffLayout = () => {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="h-[100dvh] h-screen lg:h-auto lg:min-h-screen flex flex-col lg:flex-row bg-[#F7FAF7] text-[#17211B] antialiased overflow-hidden lg:overflow-visible">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7FAF7] text-[#17211B] antialiased">
       {/* Desktop Sidebar (lg+) */}
       <Sidebar role={ROLES.STAFF} />
 
@@ -38,7 +38,7 @@ const StaffLayout = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full lg:h-auto overflow-hidden lg:overflow-visible">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Mobile Header (< lg) */}
         <div className="lg:hidden shrink-0">
           <MobileHeader title="Staff Console" onOpenMenu={() => setMobileSidebarOpen(true)} />
@@ -85,8 +85,8 @@ const StaffLayout = () => {
           </div>
         </header>
 
-        {/* Viewport Outlet with pure isolated mobile scrolling */}
-        <main className="flex-1 overflow-y-auto overscroll-contain pt-16 pb-24 px-3.5 sm:px-6 lg:pt-6 lg:pb-8 lg:px-8 max-w-7xl w-full mx-auto -webkit-overflow-scrolling-touch">
+        {/* Viewport Outlet with natural browser scrolling */}
+        <main className="flex-1 pt-18 lg:pt-6 pb-24 lg:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
 

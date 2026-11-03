@@ -44,7 +44,7 @@ const Sidebar = ({ role = ROLES.STUDENT, isMobile = false, onClose }) => {
     <aside
       className={cn(
         'flex flex-col bg-white border-r border-[#E1E9E2] text-[#17211B]',
-        isMobile ? 'w-full h-full' : 'w-64 shrink-0 hidden lg:flex min-h-screen'
+        isMobile ? 'w-full h-full' : 'w-64 shrink-0 hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto'
       )}
     >
       {/* Brand & Platform Tag */}
