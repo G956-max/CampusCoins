@@ -2,11 +2,9 @@ import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../config/supabase';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL !== undefined
-    ? import.meta.env.VITE_API_BASE_URL
-    : import.meta.env.PROD
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
     ? ''
-    : 'http://localhost:5000';
+    : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000');
 
 /**
  * Standardized Axios client instance
