@@ -8,7 +8,6 @@ import StaffLayout from '../layouts/StaffLayout';
 import AdminLayout from '../layouts/AdminLayout';
 
 // Pages
-import LandingPage from '../pages/landing/LandingPage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import StudentDashboard from '../pages/student/StudentDashboard';
@@ -52,6 +51,24 @@ import ProtectedRoute, { StudentRoute, StaffRoute, AdminRoute } from './Protecte
 import { ROLES } from '../constants/roles';
 import { useAuth } from '../context/AuthContext';
 
+// Root Path Redirector: If user is authenticated, route to their role dashboard; else route to /login
+const RootRedirector = () => {
+  const { user, role, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7FAF7]">
+        <div className="w-8 h-8 border-3 border-[#168451] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  if (role === ROLES.STAFF) return <Navigate to="/staff/dashboard" replace />;
+  if (role === ROLES.ADMIN) return <Navigate to="/admin/dashboard" replace />;
+  return <Navigate to="/student/dashboard" replace />;
+};
+
 // Profile Redirector helper component
 const ProfileRedirector = () => {
   const { role } = useAuth();
@@ -63,9 +80,13 @@ const ProfileRedirector = () => {
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Root redirect: Landing page removed, opens straight to Dashboard or Login */}
+      <Route path="/" element={<RootRedirector />} />
+      <Route path="/home" element={<Navigate to="/" replace />} />
+      <Route path="/landing" element={<Navigate to="/" replace />} />
+
       {/* Public Pages */}
       <Route element={<PublicLayout />}>
-        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/campus-map" element={<CampusMapPage />} />

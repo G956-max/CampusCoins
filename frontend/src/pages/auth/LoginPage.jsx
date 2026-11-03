@@ -31,9 +31,18 @@ const loginSchema = z.object({
 });
 
 const LoginPage = () => {
-  const { login, loading, isSupabaseConfigured } = useAuth();
+  const { user, role, login, loading, isSupabaseConfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // If already logged in, redirect directly to role dashboard
+  React.useEffect(() => {
+    if (user) {
+      if (role === ROLES.STAFF) navigate('/staff/dashboard', { replace: true });
+      else if (role === ROLES.ADMIN) navigate('/admin/dashboard', { replace: true });
+      else navigate('/student/dashboard', { replace: true });
+    }
+  }, [user, role, navigate]);
 
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');

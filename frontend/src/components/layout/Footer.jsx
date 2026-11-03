@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Coins, Heart } from 'lucide-react';
 import Badge from '../common/Badge';
 
@@ -38,24 +39,19 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/#features" className="hover:text-[#168451] transition-colors">
-                  Key Features
-                </a>
-              </li>
-              <li>
-                <a href="/#how-it-works" className="hover:text-[#168451] transition-colors">
-                  How It Works
-                </a>
-              </li>
-              <li>
-                <a href="/#about" className="hover:text-[#168451] transition-colors">
-                  Civic Mission
-                </a>
-              </li>
-              <li>
-                <a href="/login" className="hover:text-[#168451] transition-colors">
+                <Link to="/login" className="hover:text-[#168451] transition-colors">
                   Campus Login
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link to="/register" className="hover:text-[#168451] transition-colors">
+                  Student Registration
+                </Link>
+              </li>
+              <li>
+                <Link to="/map" className="hover:text-[#168451] transition-colors">
+                  Campus Map & Routes
+                </Link>
               </li>
             </ul>
           </div>

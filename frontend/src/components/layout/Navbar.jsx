@@ -39,18 +39,9 @@ const Navbar = () => {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-[#647168]">
-            <a href="/#home" className="hover:text-[#168451] transition-colors">
-              Home
-            </a>
-            <a href="/#features" className="hover:text-[#168451] transition-colors">
-              Features
-            </a>
-            <a href="/#how-it-works" className="hover:text-[#168451] transition-colors">
-              How It Works
-            </a>
-            <a href="/#about" className="hover:text-[#168451] transition-colors">
-              About
-            </a>
+            <Link to="/map" className="hover:text-[#168451] transition-colors">
+              Campus Map
+            </Link>
           </nav>
 
           {/* Right Area: Health badge + Notifications + CTA buttons */}
@@ -123,34 +114,13 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-[#E1E9E2] px-4 pt-3 pb-5 space-y-3 shadow-lg animate-fadeIn">
           <nav className="flex flex-col space-y-1.5 text-sm font-medium">
-            <a
-              href="/#home"
+            <Link
+              to="/map"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 rounded-lg text-[#17211B] hover:bg-[#EAF6EE] hover:text-[#168451]"
             >
-              Home
-            </a>
-            <a
-              href="/#features"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-lg text-[#17211B] hover:bg-[#EAF6EE] hover:text-[#168451]"
-            >
-              Features
-            </a>
-            <a
-              href="/#how-it-works"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-lg text-[#17211B] hover:bg-[#EAF6EE] hover:text-[#168451]"
-            >
-              How It Works
-            </a>
-            <a
-              href="/#about"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 rounded-lg text-[#17211B] hover:bg-[#EAF6EE] hover:text-[#168451]"
-            >
-              About
-            </a>
+              Campus Map
+            </Link>
           </nav>
 
           <div className="pt-3 border-t border-[#E1E9E2] flex flex-col gap-2">
