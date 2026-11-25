@@ -27,8 +27,8 @@ CREATE POLICY "Admin manage profiles" ON public.profiles FOR ALL
     USING (public.is_admin());
 
 -- 3. Complaints Policies
-DROP POLICY IF EXISTS "Students view own complaints" ON public.complaints;
-DROP POLICY IF EXISTS "Students insert complaints" ON public.complaints;
+DROP POLICY IF EXISTS "Students view own complaints" ON public.complaints;\\81
+0DROP POLICY IF EXISTS "Students insert complaints" ON public.complaints;
 DROP POLICY IF EXISTS "Staff and admin update complaints" ON public.complaints;
 DROP POLICY IF EXISTS "Staff view assigned complaints" ON public.complaints;
 DROP POLICY IF EXISTS "Admin view all complaints" ON public.complaints;

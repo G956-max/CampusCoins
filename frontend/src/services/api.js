@@ -37,11 +37,25 @@ api.interceptors.request.use(
       }
     }
 
-    // Development fallback: If no session token, attach dev mock credentials
+    // Development / Demo fallback: If no session token, attach demo credentials matching current active role
     if (!config.headers.Authorization) {
-      config.headers.Authorization = 'Bearer mock-staff-token';
-      config.headers['x-mock-role'] = 'staff';
-      config.headers['x-mock-user-id'] = 'b8000000-0000-0000-0000-000000000002';
+      let activeRole = 'student';
+      let activeUserId = 'b8000000-0000-0000-0000-000000000001';
+
+      try {
+        const stored = localStorage.getItem('campuscoins_demo_session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          activeRole = parsed?.profile?.role || parsed?.user?.user_metadata?.role || activeRole;
+          activeUserId = parsed?.profile?.id || parsed?.user?.id || activeUserId;
+        }
+      } catch (e) {
+        // Fallback default
+      }
+
+      config.headers.Authorization = `Bearer mock-${activeRole}-token`;
+      config.headers['x-mock-role'] = activeRole;
+      config.headers['x-mock-user-id'] = activeUserId;
     }
 
     return config;

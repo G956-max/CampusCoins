@@ -63,6 +63,27 @@ const LoginPage = () => {
     },
   });
 
+  const handleQuickLogin = async (targetRole, demoEmail, demoPass) => {
+    setAuthError('');
+    setValue('email', demoEmail);
+    setValue('password', demoPass);
+    try {
+      const result = await login({
+        email: demoEmail,
+        password: demoPass,
+        role: targetRole,
+      });
+
+      const userRole = result?.profile?.role || result?.user?.user_metadata?.role || targetRole;
+      let targetPath = '/student/dashboard';
+      if (userRole === ROLES.STAFF) targetPath = '/staff/dashboard';
+      if (userRole === ROLES.ADMIN) targetPath = '/admin/dashboard';
+      navigate(targetPath, { replace: true });
+    } catch (err) {
+      setAuthError(err.message || 'Login failed. Please try again.');
+    }
+  };
+
   const onSubmit = async (data) => {
     setAuthError('');
     try {
@@ -221,47 +242,104 @@ const LoginPage = () => {
 
           {/* Quick Demo Credentials Helper */}
           <div className="mt-4 p-3 rounded-xl bg-[#F7FAF7] border border-[#CBE7D4] text-xs space-y-3">
+            <div className="flex items-center justify-between pb-1 border-b border-[#E1E9E2]">
+              <span className="font-bold text-[#17211B] text-[12px]">🚀 1-Click Demo Portals:</span>
+              <span className="text-[10px] text-[#647168] font-medium">Click to instantly log in</span>
+            </div>
+
+            {/* Student Demo */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <span className="font-bold text-[#17211B] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#168451]"></span>
-                  Admin Portal Login:
+                  Student Portal:
                 </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setValue('email', 'admin.campuscoins@gmail.com');
-                    setValue('password', 'AdminPassword123!');
-                  }}
-                  className="text-[11px] font-semibold text-[#168451] hover:underline cursor-pointer bg-[#EAF6EE] px-2 py-0.5 rounded"
-                >
-                  Auto-Fill Admin
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValue('email', 'alex.rivera@campus.edu');
+                      setValue('password', 'StudentPassword123!');
+                    }}
+                    className="text-[10px] font-semibold text-[#168451] hover:underline cursor-pointer bg-[#EAF6EE] px-2 py-0.5 rounded"
+                  >
+                    Auto-Fill
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin(ROLES.STUDENT, 'alex.rivera@campus.edu', 'StudentPassword123!')}
+                    className="text-[10px] font-bold text-white bg-[#168451] hover:bg-[#116B42] px-2.5 py-0.5 rounded shadow-xs cursor-pointer"
+                  >
+                    Login as Student
+                  </button>
+                </div>
               </div>
               <p className="text-[11px] text-[#647168] font-mono">
-                admin.campuscoins@gmail.com / AdminPassword123!
+                alex.rivera@campus.edu / StudentPassword123!
               </p>
             </div>
 
+            {/* Staff Demo */}
             <div className="pt-2 border-t border-[#E1E9E2]">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-bold text-[#17211B] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#1E6091]"></span>
-                  Staff / Incharge Login:
+                  Staff / Incharge:
                 </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setValue('email', 'staff.campuscoins@gmail.com');
-                    setValue('password', 'StaffPassword123!');
-                  }}
-                  className="text-[11px] font-semibold text-[#1E6091] hover:underline cursor-pointer bg-[#EAF0F6] px-2 py-0.5 rounded"
-                >
-                  Auto-Fill Staff
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValue('email', 'staff.campuscoins@gmail.com');
+                      setValue('password', 'StaffPassword123!');
+                    }}
+                    className="text-[10px] font-semibold text-[#1E6091] hover:underline cursor-pointer bg-[#EAF0F6] px-2 py-0.5 rounded"
+                  >
+                    Auto-Fill
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin(ROLES.STAFF, 'staff.campuscoins@gmail.com', 'StaffPassword123!')}
+                    className="text-[10px] font-bold text-white bg-[#1E6091] hover:bg-[#154a73] px-2.5 py-0.5 rounded shadow-xs cursor-pointer"
+                  >
+                    Login as Staff
+                  </button>
+                </div>
               </div>
               <p className="text-[11px] text-[#647168] font-mono">
                 staff.campuscoins@gmail.com / StaffPassword123!
+              </p>
+            </div>
+
+            {/* Admin Demo */}
+            <div className="pt-2 border-t border-[#E1E9E2]">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-[#17211B] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#8E44AD]"></span>
+                  Admin Portal:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValue('email', 'admin.campuscoins@gmail.com');
+                      setValue('password', 'AdminPassword123!');
+                    }}
+                    className="text-[10px] font-semibold text-[#8E44AD] hover:underline cursor-pointer bg-[#F4ECF7] px-2 py-0.5 rounded"
+                  >
+                    Auto-Fill
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin(ROLES.ADMIN, 'admin.campuscoins@gmail.com', 'AdminPassword123!')}
+                    className="text-[10px] font-bold text-white bg-[#8E44AD] hover:bg-[#732d91] px-2.5 py-0.5 rounded shadow-xs cursor-pointer"
+                  >
+                    Login as Admin
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-[#647168] font-mono">
+                admin.campuscoins@gmail.com / AdminPassword123!
               </p>
             </div>
           </div>

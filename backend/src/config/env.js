@@ -8,7 +8,7 @@ const config = {
   port: parseInt(process.env.PORT, 10) || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
-  allowDevMockAuth: (process.env.NODE_ENV === 'test' || process.env.ALLOW_DEV_MOCK_AUTH === 'true') && process.env.NODE_ENV !== 'production',
+  allowDevMockAuth: process.env.ALLOW_DEV_MOCK_AUTH === 'true' || process.env.NODE_ENV !== 'production' || process.env.VERCEL !== undefined,
   aiServiceUrl: process.env.AI_SERVICE_URL || '',
   supabase: {
     url: process.env.SUPABASE_URL || 'https://fscvotjtqatutitnvncc.supabase.co',

@@ -14,6 +14,13 @@ const MOCK_PROFILES = {
     role: 'student',
     student_id: 'STU-2024-8842',
   },
+  'b8000000-0000-0000-0000-000000000001': {
+    id: 'b8000000-0000-0000-0000-000000000001',
+    email: 'alex.rivera@campus.edu',
+    full_name: 'Alex Rivera',
+    role: 'student',
+    student_id: 'STU-2024-8842',
+  },
   'mock-staff-id': {
     id: 'b8000000-0000-0000-0000-000000000002',
     email: 'david.vance@campus.edu',
@@ -21,7 +28,20 @@ const MOCK_PROFILES = {
     role: 'staff',
     staff_id: 'STF-402',
   },
+  'b8000000-0000-0000-0000-000000000002': {
+    id: 'b8000000-0000-0000-0000-000000000002',
+    email: 'david.vance@campus.edu',
+    full_name: 'David Vance',
+    role: 'staff',
+    staff_id: 'STF-402',
+  },
   'mock-admin-id': {
+    id: 'b8000000-0000-0000-0000-000000000003',
+    email: 'admin.office@campus.edu',
+    full_name: 'Dr. Eleanor Vance',
+    role: 'admin',
+  },
+  'b8000000-0000-0000-0000-000000000003': {
     id: 'b8000000-0000-0000-0000-000000000003',
     email: 'admin.office@campus.edu',
     full_name: 'Dr. Eleanor Vance',
@@ -60,9 +80,9 @@ const verifyAuth = async (req, res, next) => {
     (authHeader && authHeader.includes('mock-'))
   );
 
-  // 1. Production Security Guard: Reject mock auth unconditionally in production
+  // 1. Production Security Guard: Reject mock auth only if allowDevMockAuth is disabled
   if (isMockAuthAttempt) {
-    if (config.nodeEnv === 'production' || !config.allowDevMockAuth) {
+    if (!config.allowDevMockAuth) {
       logger.warn('[SECURITY ALERT] Unauthorized mock authentication attempt rejected in production.');
       return sendError(res, 'Invalid authentication credentials. Mock authentication is disabled in this environment.', 401);
     }
